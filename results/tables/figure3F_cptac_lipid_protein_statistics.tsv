@@ -1,0 +1,16 @@
+gene_set	protein	expected_direction	umich_median_agg	umich_median_ref	umich_effect	umich_pval	umich_fdr	umich_direction	umich_reproduced	bcm_median_agg	bcm_median_ref	bcm_effect	bcm_pval	bcm_fdr	bcm_direction	bcm_reproduced	replicated_both	significant_both
+lipid_synthesis_srebp	ACACA	up	0.1861	-0.0577	0.2439	8.9e-05	0.0007	up	True	23.8876	23.6585	0.2291	0.007688	0.0577	up	True	True	False
+fatty_acid_uptake_oxidation	ACADL	down	-1.3181	-0.6142	-0.7039	0.0	0.0	down	True	23.0659	23.678	-0.6121	2.2e-05	0.0003	down	True	True	True
+lipid_synthesis_srebp	ACLY	up	-0.0386	0.0749	-0.1134	0.067656	0.1691	down	False	27.5472	27.5336	0.0136	0.828306	0.8832	up	True	False	False
+fatty_acid_uptake_oxidation	CD36	down	-1.1774	-0.9798	-0.1976	0.516894	0.7049	down	True	22.4503	22.3417	0.1086	0.731747	0.8832	up	False	False	False
+fatty_acid_uptake_oxidation	CPT1A	down	-0.2276	-0.2509	0.0233	0.506845	0.7049	up	False	24.5227	24.5685	-0.0459	0.497385	0.8832	down	True	False	False
+fatty_acid_uptake_oxidation	FABP4	down	-1.2671	-1.4623	0.1952	0.869741	0.8697	up	False	26.3902	26.1441	0.246	0.413055	0.8832	up	False	False	False
+fatty_acid_uptake_oxidation	FABP5	down	-0.2321	-0.0718	-0.1603	0.026045	0.0781	down	True	28.4619	28.3605	0.1014	0.883199	0.8832	up	False	False	False
+desaturation_elongation	FADS1	up	0.0533	-0.0231	0.0764	0.836996	0.8697	up	True	18.8009	18.6364	0.1645	0.804353	0.8832	up	True	True	False
+desaturation_elongation	FADS2	up	-0.1167	0.0628	-0.1794	0.370326	0.6172	down	False	19.8852	19.885	0.0002	0.864462	0.8832	up	True	False	False
+lipid_synthesis_srebp	FASN	up	0.0442	-0.0671	0.1113	0.002928	0.0146	up	True	27.3109	27.1796	0.1312	0.018391	0.092	up	True	True	False
+fatty_acid_uptake_oxidation	HADHA	down	-0.24	-0.2786	0.0385	0.857462	0.8697	up	False	28.5095	28.45	0.0595	0.669558	0.8832	up	False	False	False
+lipid_synthesis_srebp	HMGCR	up	-0.1829	-0.4422	0.2593	0.273561	0.5161	up	True	18.1396	17.953	0.1865	0.391267	0.8832	up	True	True	False
+desaturation_elongation	SCD	up	0.0604	0.0283	0.032	0.689562	0.862	up	True	21.8172	21.7672	0.05	0.786203	0.8832	up	True	True	False
+lipid_synthesis_srebp	SQLE	up	0.1436	-0.0014	0.145	0.013308	0.0499	up	True	21.2758	21.0402	0.2356	0.097308	0.2919	up	True	True	False
+lipid_synthesis_srebp	SREBF1	up	-0.0208	0.0532	-0.074	0.275234	0.5161	down	False	19.2762	19.533	-0.2568	0.07776	0.2916	down	False	False	False

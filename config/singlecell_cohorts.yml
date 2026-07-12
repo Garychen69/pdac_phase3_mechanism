@@ -1,0 +1,66 @@
+cohorts:
+  - name: GSE154778
+    description: "Werba et al. 2023 PDAC scRNA-seq - tumor microenvironment"
+    geo_accession: GSE154778
+    raw_dir: data/raw/singlecell/GSE154778
+    processed_file: data/processed/singlecell/GSE154778_preprocessed.h5ad
+    annotations_file: data/processed/singlecell/GSE154778_cell_annotations.tsv
+    scores_file: data/processed/singlecell/GSE154778_cell_scores.tsv
+    expected_cell_types:
+      - malignant_epithelial
+      - caf_fibroblast
+      - myeloid
+      - tcell_nk
+      - endothelial
+      - acinar_normal
+      - ductal_normal
+      - bcell_plasma
+
+  - name: GSE202051
+    description: "PDAC scRNA-seq cohort 2"
+    geo_accession: GSE202051
+    raw_dir: data/raw/singlecell/GSE202051
+    processed_file: data/processed/singlecell/GSE202051_preprocessed.h5ad
+    annotations_file: data/processed/singlecell/GSE202051_cell_annotations.tsv
+    scores_file: data/processed/singlecell/GSE202051_cell_scores.tsv
+    expected_cell_types:
+      - malignant_epithelial
+      - caf_fibroblast
+      - myeloid
+      - tcell_nk
+      - endothelial
+      - acinar_normal
+      - ductal_normal
+      - bcell_plasma
+
+  - name: Peng_et_al
+    description: "Peng et al. 2019 Cell Research PDAC scRNA-seq"
+    geo_accession: GSE155698
+    raw_dir: data/raw/singlecell/Peng_et_al
+    processed_file: data/processed/singlecell/Peng_et_al_preprocessed.h5ad
+    annotations_file: data/processed/singlecell/Peng_et_al_cell_annotations.tsv
+    scores_file: data/processed/singlecell/Peng_et_al_cell_scores.tsv
+    expected_cell_types:
+      - malignant_epithelial
+      - caf_fibroblast
+      - myeloid
+      - tcell_nk
+      - endothelial
+      - acinar_normal
+      - ductal_normal
+      - bcell_plasma
+
+simulation_params:
+  n_cells: 2000
+  n_genes: 500
+  cell_type_fractions:
+    malignant_epithelial: 0.40
+    caf_fibroblast: 0.15
+    myeloid: 0.15
+    tcell_nk: 0.10
+    endothelial: 0.10
+    acinar_normal: 0.05
+    ductal_normal: 0.05
+  random_seed: 1234
+  marker_boost_factor: 3.0
+  n_patients: 10

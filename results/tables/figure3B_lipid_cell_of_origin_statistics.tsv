@@ -1,0 +1,13 @@
+cohort	cell_type	score	n_aggressive	n_reference	n_aggressive_cells	n_reference_cells	expected_direction	observed_direction	median_diff_agg_minus_ref	wilcoxon_p_raw	wilcoxon_p_adj_BH	significant_FDR05	direction_reproduced	fully_reproduced	is_simulated	unit_of_analysis	cell_intrinsic_supported
+Peng_et_al	malignant_epithelial	lipid_synthesis_srebp	5	6	5730	3666	up	up	0.089	0.0062	0.0185	True	True	True	False	patient_pseudobulk	True
+Peng_et_al	malignant_epithelial	desaturation_elongation	5	6	5730	3666	up	up	0.0447	0.5839	0.5839	False	True	False	False	patient_pseudobulk	False
+Peng_et_al	malignant_epithelial	fatty_acid_uptake_oxidation	5	6	5730	3666	down	up	0.0194	0.2733	0.41	False	False	False	False	patient_pseudobulk	False
+Peng_et_al	caf_fibroblast	lipid_synthesis_srebp	5	6	288	938	up	up	0.014	0.1441	0.2733	False	True	False	False	patient_pseudobulk	False
+Peng_et_al	caf_fibroblast	desaturation_elongation	5	6	288	938	up	up	0.011	0.2012	0.2733	False	True	False	False	patient_pseudobulk	False
+Peng_et_al	caf_fibroblast	fatty_acid_uptake_oxidation	5	6	288	938	down	up	0.0028	0.2733	0.2733	False	False	False	False	patient_pseudobulk	False
+Peng_et_al	myeloid	lipid_synthesis_srebp	5	6	2107	5675	up	down	-0.0042	0.8551	0.8551	False	False	False	False	patient_pseudobulk	False
+Peng_et_al	myeloid	desaturation_elongation	5	6	2107	5675	up	up	0.0167	0.5839	0.8551	False	True	False	False	patient_pseudobulk	False
+Peng_et_al	myeloid	fatty_acid_uptake_oxidation	5	6	2107	5675	down	up	0.0221	0.5839	0.8551	False	False	False	False	patient_pseudobulk	False
+Peng_et_al	endothelial	lipid_synthesis_srebp	5	6	690	1060	up	up	0.0065	0.8551	0.8551	False	True	False	False	patient_pseudobulk	False
+Peng_et_al	endothelial	desaturation_elongation	5	6	690	1060	up	up	0.0114	0.4652	0.6978	False	True	False	False	patient_pseudobulk	False
+Peng_et_al	endothelial	fatty_acid_uptake_oxidation	5	6	690	1060	down	down	-0.0419	0.2733	0.6978	False	True	False	False	patient_pseudobulk	False

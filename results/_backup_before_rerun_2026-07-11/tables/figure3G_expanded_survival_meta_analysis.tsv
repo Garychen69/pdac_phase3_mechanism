@@ -1,0 +1,6 @@
+cohort	HR	log_HR	SE_log_HR	HR_lower_95CI	HR_upper_95CI	p_value	n_total	n_events	is_simulated	note	analysis_type
+GSE79668	1.232	0.2086	0.343	0.629	2.413	0.543	51.0	32.0	False	Phase 2 result	individual_cohort
+GSE71729	1.079	0.076	0.25	0.661	1.761	0.761	145.0	80.0	False	Phase 2 result	individual_cohort
+GSE21501	0.9269	-0.0759	0.2959	0.519	1.655	0.7976	102.0	66.0	False	Real Cox fit on parsed GSE21501 SOFT data: hypoxia-high/acinar-low (n_aggressive=24) vs others, z-scored marker genes (9/9 hypoxia, 9/11 acinar available)	individual_cohort
+pooled_fixed_effects	1.0609	0.0591	0.1668	0.765	1.4712	0.7231			False		meta_analysis
+pooled_random_effects	1.0609	0.0591	0.1668	0.765	1.4712	0.7231			False	0.0	meta_analysis

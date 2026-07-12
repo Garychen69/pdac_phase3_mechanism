@@ -1,0 +1,17 @@
+# Raw/processed data and downloaded cohorts (large, re-derivable from GEO/CPTAC accessions)
+data/
+cache/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# OS
+.DS_Store
+Thumbs.db

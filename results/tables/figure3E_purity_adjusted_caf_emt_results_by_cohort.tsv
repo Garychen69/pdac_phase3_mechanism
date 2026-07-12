@@ -1,0 +1,7 @@
+cohort	score	n_samples	n_aggressive	n_reference	coef_unadjusted	pval_unadjusted	coef_purity_adjusted	pval_purity_adjusted	coef_purity_term	direction_change_after_adjustment	interpretation	is_simulated	pval_unadjusted_BH	pval_purity_adjusted_BH
+GSE79668	caf_score	49	13	36	0.4188	0.152	0.048	0.8022	-3.5701	attenuated	Effect attenuated after purity adjustment; suggests confounding by stroma	False	0.152	0.8022
+GSE79668	emt_score	49	13	36	0.3951	0.1279	0.0471	0.7599	-3.351	attenuated	Effect attenuated after purity adjustment; suggests confounding by stroma	False	0.152	0.8022
+GSE71729	caf_score	145	45	100	0.5273	0.0003	0.4609	0.0	-2.8747	attenuated	Effect attenuated after purity adjustment; suggests confounding by stroma	False	0.0006	0.0
+GSE71729	emt_score	145	45	100	0.4926	0.0	0.4463	0.0	-2.0047	attenuated	Effect attenuated after purity adjustment; suggests confounding by stroma	False	0.0	0.0
+GSE62165	caf_score	131	40	91	0.4399	0.0075	0.4311	0.0	-3.8947	attenuated	Effect attenuated after purity adjustment; suggests confounding by stroma	False	0.0112	0.0
+GSE62165	emt_score	131	40	91	0.5602	0.0001	0.5525	0.0	-3.3675	attenuated	Effect attenuated after purity adjustment; suggests confounding by stroma	False	0.0003	0.0

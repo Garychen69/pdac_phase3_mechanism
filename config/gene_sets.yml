@@ -1,0 +1,175 @@
+hypoxia:
+  - EPAS1
+  - VEGFA
+  - CA9
+  - ADM
+  - EGLN3
+  - LOX
+  - SLC2A1
+  - BNIP3
+  - ANGPT2
+
+acinar_identity:
+  - PTF1A
+  - BHLHA15
+  - RBPJL
+  - CPA1
+  - CPA2
+  - PRSS1
+  - PRSS2
+  - CEL
+  - CELA3A
+  - AMY2A
+  - REG1A
+
+lipid_synthesis_srebp:
+  - SREBF1
+  - FASN
+  - ACACA
+  - ACLY
+  - HMGCR
+  - SQLE
+
+desaturation_elongation:
+  - SCD
+  - FADS1
+  - FADS2
+  - ELOVL6
+
+fatty_acid_uptake_oxidation:
+  - CD36
+  - FABP4
+  - FABP5
+  - CPT1A
+  - CPT1B
+  - ACADL
+  - HADHA
+
+caf:
+  - ACTA2
+  - COL1A1
+  - COL1A2
+  - COL3A1
+  - DCN
+  - LUM
+  - FAP
+  - PDGFRB
+  - TAGLN
+  - POSTN
+
+emt:
+  - VIM
+  - ZEB1
+  - ZEB2
+  - SNAI1
+  - SNAI2
+  - TWIST1
+  - FN1
+  - ITGA5
+  - MMP2
+  - MMP9
+
+endothelial:
+  - PECAM1
+  - VWF
+  - KDR
+  - FLT1
+  - ENG
+  - CDH5
+  - ESAM
+  - CLDN5
+
+macrophage:
+  - CD68
+  - CSF1R
+  - MRC1
+  - CD163
+  - MSR1
+  - C1QA
+  - C1QB
+  - C1QC
+
+immune_suppression:
+  - TGFB1
+  - IL10
+  - PDCD1
+  - CD274
+  - CTLA4
+  - HAVCR2
+  - LAG3
+  - TIGIT
+  - IDO1
+
+cell_type_markers:
+  malignant_epithelial:
+    - KRT19
+    - KRT8
+    - KRT18
+    - EPCAM
+    - SOX9
+  acinar_normal:
+    - PRSS1
+    - PRSS2
+    - CPA1
+    - CPA2
+    - CELA3A
+    - AMY2A
+  ductal_normal:
+    - KRT19
+    - CFTR
+    - SLC4A4
+  caf_fibroblast:
+    - COL1A1
+    - COL1A2
+    - DCN
+    - PDGFRB
+    - ACTA2
+  endothelial:
+    - PECAM1
+    - VWF
+    - CDH5
+  myeloid:
+    - CD68
+    - CSF1R
+    - LYZ
+  tcell_nk:
+    - CD3D
+    - CD3E
+    - NKG7
+    - GNLY
+  bcell_plasma:
+    - MS4A1
+    - CD79A
+    - MZB1
+
+purity_stromal_immune:
+  # General non-malignant-content proxy for tumor purity adjustment. Deliberately
+  # disjoint from the caf/emt (and every other) signature above: purity should
+  # measure overall non-tumor content across immune + stromal + vascular
+  # compartments, not "CAF activation" specifically. Regressing the caf_score on
+  # a purity covariate built from CAF genes themselves would be partly circular.
+  - PTPRC    # CD45, pan-leukocyte
+  - THY1     # CD90, generic mesenchymal/stromal marker (not CAF-activation-specific)
+  - SPARC    # broadly expressed stromal ECM glycoprotein
+  - CD2      # pan T-lymphocyte
+  - CD14     # monocyte/myeloid (distinct genes from the macrophage set above)
+  - CD34     # endothelial/vascular progenitor (distinct genes from the endothelial set above)
+  - LAPTM5   # pan-hematopoietic
+  - SERPING1 # complement/stromal
+
+caf_subtypes:
+  myCAF:
+    - ACTA2
+    - TAGLN
+    - MYH11
+    - CNN1
+  iCAF:
+    - IL6
+    - CXCL12
+    - PDGFRA
+    - HAS1
+  apCAF:
+    - HLA-DRA
+    - CD74
+    - SLPI
+    - SAA1

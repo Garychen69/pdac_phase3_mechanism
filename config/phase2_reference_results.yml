@@ -1,0 +1,60 @@
+phase2_validation:
+  description: "Phase 2 results validated across GSE79668, GSE71729, GSE62165"
+
+  lipid_rewiring:
+    lipid_synthesis_srebp: "UP in aggressive (8/9 reproduced)"
+    desaturation_elongation: "UP in aggressive (8/9 reproduced)"
+    fatty_acid_uptake_oxidation: "DOWN in aggressive (8/9 reproduced)"
+
+  caf_score: "consistently UP in aggressive across all 3 cohorts"
+  emt_score: "consistently UP in aggressive across all 3 cohorts"
+
+  survival:
+    GSE79668:
+      HR: 1.232
+      HR_lower: null
+      HR_upper: null
+      p_value: 0.543
+      n_samples: null
+    GSE71729:
+      HR: 1.079
+      HR_lower: null
+      HR_upper: null
+      p_value: 0.761
+      n_samples: null
+    meta_pooled:
+      HR: 1.129
+      HR_lower: 0.76
+      HR_upper: 1.67
+      p_value: 0.55
+      conclusion: "underpowered, not significant"
+
+  hypoxia_acinar_correlation:
+    GSE79668: -0.07
+    GSE71729: -0.27
+    GSE62165: -0.47
+    conclusion: "weak to moderate negative correlation; state may be composite artifact"
+
+  cohorts_used:
+    - GSE79668
+    - GSE71729
+    - GSE62165
+
+phase2_bulk_data_paths:
+  processed_dir: "C:/Users/erica/OneDrive/Research/pdac_phase2_validation/data/processed/validation"
+  cohorts:
+    - name: GSE79668
+      sample_scores: "GSE79668_sample_scores.tsv"
+      group_assignments: "GSE79668_group_assignments.tsv"
+      clinical: "GSE79668_clinical_clean.tsv"
+      expression: "GSE79668_expression_gene_symbol.tsv.gz"
+    - name: GSE71729
+      sample_scores: "GSE71729_sample_scores.tsv"
+      group_assignments: "GSE71729_group_assignments.tsv"
+      clinical: "GSE71729_clinical_clean.tsv"
+      expression: "GSE71729_expression_gene_symbol.tsv.gz"
+    - name: GSE62165
+      sample_scores: "GSE62165_sample_scores.tsv"
+      group_assignments: "GSE62165_group_assignments.tsv"
+      clinical: "GSE62165_clinical_clean.tsv"
+      expression: "GSE62165_expression_gene_symbol.tsv.gz"
