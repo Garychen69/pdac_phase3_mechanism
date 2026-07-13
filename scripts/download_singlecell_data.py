@@ -59,7 +59,11 @@ def has_existing_real_data(dataset, dest_dir):
     if dataset == "GSE154778":
         return os.path.exists(os.path.join(dest_dir, "GSE154778_dgeMtx.csv.gz"))
     if dataset == "GSE202051":
-        return os.path.exists(os.path.join(dest_dir, "GSE202051_adata_010nuc_10x.h5ad"))
+        # Prefer the full 43-patient combined object (totaldata-final-toshare);
+        # the old adata_010nuc_10x.h5ad is a single-sample subset that only
+        # yields 1 usable patient and is kept only as a legacy fallback.
+        return os.path.exists(os.path.join(dest_dir, "GSE202051_full.h5ad")) or \
+               os.path.exists(os.path.join(dest_dir, "GSE202051_adata_010nuc_10x.h5ad"))
     if dataset == "Peng_et_al":
         tar_path = os.path.join(dest_dir, "GSE155698_RAW.tar")
         return os.path.exists(tar_path) and os.path.getsize(tar_path) > 900_000_000

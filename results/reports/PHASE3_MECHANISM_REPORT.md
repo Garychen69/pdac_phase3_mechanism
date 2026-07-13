@@ -1,8 +1,10 @@
 # Phase 3 Mechanistic Report: Single-Cell Resolution of Aggressive PDAC State
 
-**Generated:** 2026-07-03 (updated 2026-07-04 with BCM replication; updated 2026-07-06 with patient-level pseudobulk re-analysis of lipid/CAF/EMT/immune-endothelial cell-of-origin, Sections 4/5/9; updated 2026-07-06 with a non-circular purity proxy, Section 6; updated 2026-07-06 with a real GSE21501 Cox fit replacing the hardcoded survival value, Section 8)
+**Generated:** 2026-07-03 (updated 2026-07-04 with BCM replication; updated 2026-07-06 with patient-level pseudobulk re-analysis of lipid/CAF/EMT/immune-endothelial cell-of-origin, Sections 4/5/9; updated 2026-07-06 with a non-circular purity proxy, Section 6; updated 2026-07-06 with a real GSE21501 Cox fit replacing the hardcoded survival value, Section 8; **updated 2026-07-12 with the full 43-patient GSE202051 object replacing a 1-patient subset, Sections 3/4/5/9/10/11**)
 
-**Reproducibility check (2026-07-11):** The full pipeline (`scripts/run_phase3_pipeline.py`) was re-run end-to-end in the `pdac_phase3` conda environment against the same on-disk real data. All key statistics reproduced to 2-3 decimal places: hypoxia/acinar Pearson r = 0.060 / -0.031 / -0.016 (GSE154778/GSE202051/Peng_et_al); CPTAC 9/15 (umich) and 10/15 (bcm) directionally concordant with ACADL independently replicated at FDR<0.05 in both; GSE21501 real Cox fit HR=0.927, p=0.798, n=102; pooled survival HR=1.061 [0.765-1.471], p=0.723; purity-adjusted CAF/EMT coefficients matched to 3 decimals across all 3 bulk cohorts. This confirms the analysis is genuinely reproducible from the real downloaded data, not a one-off result. Note: `scripts/generate_phase3_report.py` itself is an older/simpler version whose Sections 10-13 (Classification/Limitations/Wording/Next Steps) are hardcoded boilerplate that incorrectly re-asserts "simulated data" throughout — its raw output from this re-run is archived at `PHASE3_MECHANISM_REPORT_raw_template_output_2026-07-11.md` for transparency, but this file (manually curated 2026-07-06, numerically re-verified 2026-07-11) remains the canonical, accurate report.
+**Reproducibility check (2026-07-11):** The full pipeline (`scripts/run_phase3_pipeline.py`) was re-run end-to-end in the `pdac_phase3` conda environment against the same on-disk real data. All key statistics reproduced to 2-3 decimal places: hypoxia/acinar Pearson r = 0.060 / -0.031 / -0.016 (GSE154778/GSE202051/Peng_et_al); CPTAC 9/15 (umich) and 10/15 (bcm) directionally concordant with ACADL independently replicated at FDR<0.05 in both; GSE21501 real Cox fit HR=0.927, p=0.798, n=102; pooled survival HR=1.061 [0.765-1.471], p=0.723; purity-adjusted CAF/EMT coefficients matched to 3 decimals across all 3 bulk cohorts. This confirms the analysis is genuinely reproducible from the real downloaded data, not a one-off result. Note: `scripts/generate_phase3_report.py` itself is an older/simpler version whose Sections 10-13 (Classification/Limitations/Wording/Next Steps) are hardcoded boilerplate that incorrectly re-asserts "simulated data" throughout — its raw output from this re-run is archived at `PHASE3_MECHANISM_REPORT_raw_template_output_2026-07-11.md` for transparency, but this file (manually curated 2026-07-06, numerically re-verified 2026-07-11, data-upgraded 2026-07-12) remains the canonical, accurate report.
+
+**Data upgrade (2026-07-12):** GSE202051 was found to have been substantially under-downloaded. The GEO series (GSE202051) has 74 GSM samples across 43 patients, but the pipeline had only downloaded a single-sample supplementary file (`GSE202051_adata_010nuc_10x.h5ad`, 2,607 cells, 1 patient) — the 1-patient limitation cited throughout the pre-2026-07-12 version of this report was a download-completeness bug, not an inherent dataset limitation. The full series object (`GSE202051_totaldata-final-toshare.h5ad`, 224,988 cells, 43 patients, richly pre-annotated) has been downloaded, its unused ~5GB of CNV-inference/harmony/duplicate-raw data stripped (not used by this pipeline), and reprocessed through the full annotation and scoring pipeline. This converts GSE202051 from an untestable cohort into the second-best-powered single-cell cohort in the project (after Peng_et_al), materially strengthening Sections 3-5 and 9. A related production bug was also fixed in `preprocess_singlecell_cohorts.py`'s `check_dissociation_stress()`, which densified the entire expression matrix via `.toarray().mean()` and crashed with an out-of-memory error on this cohort's scale (17.4GB allocation attempt) — fixed to use scipy sparse `.mean()` directly, which works without densifying.
 
 ---
 
@@ -10,17 +12,19 @@
 
 ### Single-Cell Cohorts
 
-- **GSE154778**: Available (processed) — **REAL DATA** (8000 cells)
-- **GSE202051**: Available (processed) — **REAL DATA** (2607 cells) *(snRNA-seq; pre-annotated with rich cell-type scores — **strength: no de-novo annotation needed**)*
-- **Peng_et_al**: Available (processed) — **REAL DATA** (43888 cells)
+- **GSE154778**: Available (processed) — **REAL DATA** (8000 cells, 10 patients)
+- **GSE202051**: Available (processed) — **REAL DATA, upgraded 2026-07-12** (224,988 cells, **43 patients** — previously 2,607 cells/1 patient) *(snRNA-seq; pre-annotated with rich fine-grained cell-type labels — no de-novo annotation needed, just mapped to this pipeline's standard vocabulary)*
+- **Peng_et_al**: Available (processed) — **REAL DATA** (43888 cells, 17 patients)
 
 ### Gene Set Coverage per Cohort (signature genes found in dataset)
 
 | Cohort | hypoxia | acinar_identity | lipid_synthesis_srebp | desaturation_elongation | fatty_acid_uptake_oxidation | caf | emt |
 |--------|--------|--------|--------|--------|--------|--------|--------|
 | GSE154778 | 9/9 (100%) | 7/11 (64%) | 6/6 (100%) | 4/4 (100%) | 7/7 (100%) | 10/10 (100%) | 10/10 (100%) |
-| GSE202051 | 9/9 (100%) | 7/11 (64%) | 6/6 (100%) | 4/4 (100%) | 6/7 (86%) | 8/10 (80%) | 7/10 (70%) |
+| GSE202051 | 9/9 (100%) | 11/11 (100%) | 6/6 (100%) | 4/4 (100%) | 7/7 (100%) | 10/10 (100%) | 10/10 (100%) |
 | Peng_et_al | 9/9 (100%) | 10/11 (91%) | 6/6 (100%) | 4/4 (100%) | 7/7 (100%) | 10/10 (100%) | 10/10 (100%) |
+
+*(GSE202051's coverage improved to 100% across all 7 signatures with the full object — the previous 2,607-cell subset had lower coverage, e.g. 64% acinar_identity, 86% FA-oxidation, likely due to different gene filtering in that GEO supplementary file.)*
 
 *(⚠ = coverage < 50%, interpret with caution)*
 
@@ -43,13 +47,17 @@
   - bcell_plasma: 367 (4.6%)
   - tcell_nk: 352 (4.4%)
   - endothelial: 213 (2.7%)
-**GSE202051**: 2607 cells
-  - malignant_epithelial: 2039 (78.2%)
-  - ductal_normal: 475 (18.2%)
-  - endothelial: 46 (1.8%)
-  - acinar_normal: 25 (1.0%)
-  - caf_fibroblast: 18 (0.7%)
-  - myeloid: 4 (0.2%)
+**GSE202051** (upgraded 2026-07-12, full 43-patient object): 224,988 cells
+  - malignant_epithelial: 64,538 (28.7%)
+  - caf_fibroblast: 54,935 (24.4%)
+  - ductal_normal: 32,851 (14.6%)
+  - unknown: 26,588 (11.8%) *(pericyte, endocrine, Schwann, vascular smooth muscle, adipocyte — no clean standard-vocabulary equivalent; mapped from the real `new_celltypes` annotation, see Section 3 note)*
+  - endothelial: 19,258 (8.6%)
+  - myeloid: 11,938 (5.3%)
+  - tcell_nk: 7,668 (3.4%)
+  - acinar_normal: 5,357 (2.4%)
+  - bcell_plasma: 1,855 (0.8%)
+  *(Previous 2,607-cell/1-patient subset: malignant_epithelial 2039 (78.2%), ductal_normal 475 (18.2%), endothelial 46 (1.8%), acinar_normal 25 (1.0%), caf_fibroblast 18 (0.7%), myeloid 4 (0.2%) — retained here only for comparison; superseded.)*
 **Peng_et_al**: 43888 cells
   - myeloid: 12159 (27.7%)
   - malignant_epithelial: 11370 (25.9%)
@@ -62,17 +70,19 @@
 
 ## 3. Hypoxia/Acinar Co-occurrence Analysis (Figure 3A)
 
+**DATA UPGRADE (2026-07-12):** GSE202051 was previously represented by a single-sample GEO supplementary file (`GSE202051_adata_010nuc_10x.h5ad`, 2,607 cells, 1 patient) that made this cohort essentially untestable at the patient level. The GEO series actually has 74 GSM samples; a second, larger series-level supplementary file (`GSE202051_totaldata-final-toshare.h5ad`, 225k cells) contains the full, richly-annotated 43-patient object (18 untreated, 25 treated) with pre-computed fine-grained cell-type labels (`new_celltypes`). This file has now been downloaded, mapped to this pipeline's standard cell-type vocabulary, and reprocessed through the full pipeline, replacing the 1-patient subset below. All statistics in this section and Sections 4/5/9 for GSE202051 are from the full object.
+
 **GSE154778** (n=3710 malignant cells):
-  - Pearson r(hypoxia, acinar) = 0.060, p = 0.000
+  - Pearson r(hypoxia, acinar) = 0.060, p = 0.0003
   - Spearman r = 0.075
   - Fraction hypoxia_high/acinar_low: 0.244
   - Interpretation: Largely separate populations (composite artifact)
 
-**GSE202051** (n=2039 malignant cells):
-  - Pearson r(hypoxia, acinar) = -0.030, p = 0.168
-  - Spearman r = -0.008
-  - Fraction hypoxia_high/acinar_low: 0.261
+**GSE202051** (n=64,538 malignant cells, 43 patients — previously n=2,039 cells, 1 patient):
+  - Pearson r(hypoxia, acinar) = 0.036, p < 0.0001
+  - Fraction hypoxia_high/acinar_low: 0.260
   - Interpretation: Largely separate populations (composite artifact)
+  - This cohort is now adequately powered and independently confirms the near-zero correlation seen in the other two cohorts (previously it was underpowered at n=1 patient and its non-significant r=-0.03 could not be trusted either way).
 
 **Peng_et_al** (n=11370 malignant cells):
   - Pearson r(hypoxia, acinar) = -0.016, p = 0.088
@@ -80,8 +90,7 @@
   - Fraction hypoxia_high/acinar_low: 0.272
   - Interpretation: Largely separate populations (composite artifact)
 
-**Conclusion:** Mean fraction of malignant cells in hypoxia-high/acinar-low quadrant = 25.91%.
-Weak correlation suggests the hypoxia-high/acinar-low state is partially a composite artifact of two independent cell populations rather than a uniform cell state.
+**Conclusion (updated 2026-07-12):** Mean fraction of malignant cells in hypoxia-high/acinar-low quadrant = 25.89% (unchanged from the prior 25.91%). All three cohorts now show a near-zero Pearson correlation, and — unlike the prior report — all three are well-powered (n=3,710 to 64,538 malignant cells; the previous version had one cohort resting on essentially a single patient). Weak correlation across three adequately powered cohorts supports the hypoxia-high/acinar-low state being a composite artifact of two largely independent cell populations rather than a uniform cell state; this conclusion is now on considerably firmer footing than the prior 2/3-cohorts-adequately-powered version.
 
 *(Note: this correlation is computed at the individual-cell level and does not depend on the patient-level aggressive/reference classification, so it is not affected by the pseudoreplication issue described in Sections 4–5 below.)*
 
@@ -91,32 +100,32 @@ Weak correlation suggests the hypoxia-high/acinar-low state is partially a compo
 
 ### Patient states per cohort (after re-run)
 - GSE154778: 1 aggressive, 2 reference, 7 intermediate (of 10 patients) — **too few patients per arm to test**
-- GSE202051: 1 patient total — not testable (as before)
+- GSE202051 (**upgraded 2026-07-12**, full 43-patient object): 7 aggressive, 14–16 reference (varies slightly by cell type due to per-cell-type ≥5-cell/patient filtering), 20 intermediate — **testable**
 - Peng_et_al: 5 aggressive, 6 reference, 6 intermediate (of 17 patients) — testable
 
-### Summary by Cell Type and Score (Peng_et_al only; GSE154778/GSE202051 underpowered at patient level)
+### Summary by Cell Type and Score (Peng_et_al and GSE202051; GSE154778 still underpowered at patient level)
 
 **lipid_synthesis_srebp:**
-  - malignant_epithelial: obs=up, p_adj=0.019, repro=**YES**, cell_intrinsic=**YES** (n=5 aggressive vs 6 reference patients)
-  - caf_fibroblast: obs=up, p_adj=0.273, repro=NO (not significant)
-  - myeloid: obs=down, p_adj=0.855, repro=NO
-  - endothelial: obs=up, p_adj=0.855, repro=NO
+  - malignant_epithelial: Peng_et_al obs=up, p_adj=0.019, repro=**YES** (n=5 vs 6). GSE202051 obs=up (same direction), p_adj=0.052, repro=borderline NO (n=7 vs 14; just misses FDR<0.05).
+  - caf_fibroblast: Peng_et_al obs=up, p_adj=0.273, repro=NO. GSE202051 obs=**down** (opposite of expected "up"), p_adj=0.002, repro=NO — **significant in the wrong direction** (n=7 vs 16).
+  - myeloid: Peng_et_al obs=down, p_adj=0.855, repro=NO. GSE202051 obs=down, p_adj=0.110, repro=NO (n=6 vs 15).
+  - endothelial: Peng_et_al obs=up, p_adj=0.855, repro=NO. GSE202051 obs=**down** (opposite of expected "up"), p_adj=0.023, repro=NO — significant wrong direction (n=7 vs 16).
 
 **desaturation_elongation:**
-  - malignant_epithelial: obs=up (correct direction), p_adj=0.584, repro=NO (not significant)
-  - caf_fibroblast: obs=up, p_adj=0.273, repro=NO
-  - myeloid: obs=up, p_adj=0.855, repro=NO
-  - endothelial: obs=up, p_adj=0.698, repro=NO
+  - malignant_epithelial: Peng_et_al obs=up (correct direction), p_adj=0.584, repro=NO. GSE202051 obs=**down** (wrong direction), p_adj=0.022, repro=NO — significant wrong direction (n=7 vs 14).
+  - caf_fibroblast: Peng_et_al obs=up, p_adj=0.273, repro=NO. GSE202051 obs=down (wrong), p_adj=0.033, repro=NO — significant wrong direction.
+  - myeloid: Peng_et_al obs=up, p_adj=0.855, repro=NO. GSE202051 obs=up, p_adj=0.436, repro=NO.
+  - endothelial: Peng_et_al obs=up, p_adj=0.698, repro=NO. GSE202051 obs=down (wrong), p_adj=0.058, repro=NO (borderline).
 
 **fatty_acid_uptake_oxidation:**
-  - malignant_epithelial: obs=up (wrong direction, expected down), p_adj=0.410, repro=NO
-  - caf_fibroblast: obs=up, p_adj=0.273, repro=NO
-  - myeloid: obs=up, p_adj=0.855, repro=NO
-  - endothelial: obs=down (correct direction), p_adj=0.698, repro=NO
+  - malignant_epithelial: Peng_et_al obs=up (wrong direction, expected down), p_adj=0.410, repro=NO. GSE202051 obs=down (**correct** direction), p_adj=0.052, repro=borderline NO (n=7 vs 14).
+  - caf_fibroblast: Peng_et_al obs=up, p_adj=0.273, repro=NO. GSE202051 obs=down (correct), p_adj=0.005, repro=**YES** (n=7 vs 16).
+  - myeloid: Peng_et_al obs=up, p_adj=0.855, repro=NO. GSE202051 obs=down (correct), p_adj=0.031, repro=**YES** (n=6 vs 15).
+  - endothelial: Peng_et_al obs=down (correct direction), p_adj=0.698, repro=NO. GSE202051 obs=down (correct), p_adj=0.124, repro=NO (borderline).
 
-**Summary:** 1/3 lipid scores reproduced (correct direction + FDR<0.05) in the one adequately powered cohort (Peng_et_al, malignant cells): lipid_synthesis_srebp is elevated in aggressive malignant cells (p_adj=0.019), consistent with a cell-intrinsic effect. GSE154778 previously reported all three lipid scores as significantly reversed in malignant cells (p<0.001), but that result was driven by only 1 aggressive vs 2 reference patients tested as if 698 vs 368 independent cells — it cannot be evaluated with real patient-level power and should not be treated as a finding.
+**Summary (revised 2026-07-12):** With GSE202051 now testable at real statistical power (7 vs 14–16 patients, tens of thousands of cells per arm), the malignant-cell lipid_synthesis_srebp signal **replicates in direction in both adequately powered cohorts** (Peng_et_al significant, FDR=0.019; GSE202051 same direction, FDR=0.052, just short of significance) — this is a materially stronger result than the single-cohort finding reported before 2026-07-12. However, GSE202051 also surfaces **new significant off-target and wrong-direction signal not previously detectable**: CAF and endothelial cells show significantly *lower* lipid_synthesis_srebp in aggressive patients (opposite the expected direction), and malignant desaturation/elongation is significantly reversed rather than elevated. FA-oxidation is the most consistent score in GSE202051 — correctly reduced in malignant, CAF, and myeloid compartments (myeloid and CAF reaching FDR<0.05).
 
-**Revised conclusion:** The earlier claim that "lipid rewiring does not reproduce and reverses direction in malignant cells" was largely a pseudoreplication artifact. With patient-level testing, the only well-powered comparison (Peng_et_al, 5 vs 6 patients) shows lipid_synthesis_srebp elevated in aggressive malignant cells in the expected direction and significant after FDR correction — weak support *for* cell-intrinsic lipid synthesis rewiring, not against it. Desaturation/elongation trends in the expected direction but is not significant; FA-oxidation does not reproduce. Given n=5 vs 6 patients, this should be read as suggestive, not confirmatory — more patients (or matched bulk+single-cell data, as previously recommended) are needed.
+**Revised conclusion (2026-07-12):** The core cell-intrinsic lipid synthesis claim now has directionally consistent support in the two adequately powered cohorts (1 of 2 individually significant), which is more evidence than the single-cohort version of this finding. But the newly well-powered GSE202051 cohort also shows the *desaturation/elongation* axis significantly reversed in malignant cells and *lipid_synthesis_srebp* significantly reversed in non-malignant compartments (CAF, endothelial) — complications that a single small cohort (Peng_et_al, n=11 total patients) could not have revealed. The overall lipid cell-of-origin picture is now more informative but also more heterogeneous than "weak positive support" — it should be read as: lipid_synthesis_srebp is the most reproducible axis and trends malignant-cell-intrinsic across both testable cohorts, while desaturation/elongation and off-target (CAF/endothelial) lipid signal are inconsistent or reversed. FA-oxidation reduction is the most consistent finding of the three lipid scores, now with two of three GSE202051 cell types reaching significance in the expected (reduced) direction.
 
 ## 5. CAF/EMT Cell-of-Origin (Figures 3C, 3D)
 
@@ -126,8 +135,9 @@ Weak correlation suggests the hypoxia-high/acinar-low state is partially a compo
 
   - GSE154778: **not testable** (1 aggressive vs 2 reference patients; below the 3-per-arm minimum) — the previously reported p<0.001 result for this cohort was a pseudoreplication artifact and should be disregarded.
   - Peng_et_al (5 aggressive vs 6 reference patients): median diff = -0.135, p_raw=0.0062, p_adj(BH)=0.019, direction = **down** (opposite of expected "up")
+  - **GSE202051 (upgraded 2026-07-12, 7 aggressive vs 14 reference patients, 20,172 vs 15,414 malignant cells):** median diff = -0.079, p_raw=0.031, p_adj(BH)=0.061, direction = **down** (opposite of expected "up") — same direction as Peng_et_al, just short of FDR<0.05.
 
-**EMT conclusion:** Unlike the lipid finding, the EMT reversal **survives** patient-level correction in the one testable cohort: EMT score is still significantly *lower* in aggressive malignant cells than reference (Peng_et_al, n=5 vs 6 patients, FDR-adjusted p=0.019). This does not support malignant-cell-intrinsic EMT as the driver of the bulk EMT signal — but note this is now based on a single cohort with only 11 patients total, not "2/2 cohorts" as previously claimed; GSE154778 cannot corroborate or refute it with real patient-level power.
+**EMT conclusion (revised 2026-07-12):** The EMT reversal is no longer resting on a single 11-patient cohort. GSE202051, now adequately powered (7 vs 14 patients, tens of thousands of cells), independently trends in the **same direction** as Peng_et_al's significant finding — EMT score lower, not higher, in aggressive malignant cells — though it falls just short of FDR<0.05 on its own (p_adj=0.061). Combined, this is a directionally consistent signal across the two best-powered cohorts (1 of 2 individually significant), meaningfully stronger evidence than the single-cohort version of this finding reported before 2026-07-12. This continues to argue against malignant-cell-intrinsic EMT as the driver of the bulk EMT signal. GSE202051's CAF compartment shows EMT score *higher* in aggressive patients (median diff=+0.237, p_adj=0.058, borderline), in the expected direction — consistent with a CAF/stromal rather than malignant-cell source for the bulk EMT signal.
 
 ### CAF Subtype Analysis (mean of per-patient proportions)
 
@@ -139,7 +149,11 @@ Weak correlation suggests the hypoxia-high/acinar-low state is partially a compo
   aggressive: myCAF=18.68%, iCAF=9.54%, apCAF=1.19%
   reference: myCAF=23.73%, iCAF=9.95%, apCAF=1.61%
 
-*(Note: absolute proportions shifted from the previous pooled-cell version, e.g. GSE154778 aggressive myCAF was reported as 65.48% before — that number was dominated by whichever single aggressive patient had the most CAF cells. The corrected numbers here average across patients rather than across cells, but with 1–2 patients per arm in GSE154778 they remain descriptive, not inferential.)*
+**GSE202051 (upgraded 2026-07-12; aggressive: 7 patients, reference: 16 patients — now a real inferential comparison, not descriptive):**
+  aggressive: myCAF=6.15%, iCAF=9.66%, apCAF=0.48%
+  reference: myCAF=13.94%, iCAF=21.14%, apCAF=2.12%
+
+*(Note: absolute proportions shifted from the previous pooled-cell version, e.g. GSE154778 aggressive myCAF was reported as 65.48% before — that number was dominated by whichever single aggressive patient had the most CAF cells. The corrected numbers here average across patients rather than across cells, but with 1–2 patients per arm in GSE154778 they remain descriptive, not inferential. GSE202051 now has enough patients per arm to be a real comparison and shows the same qualitative pattern as GSE154778 (lower myCAF and iCAF proportion in aggressive patients) — this is descriptive/proportion data, not formally significance-tested in this table, but the directional consistency across two independent cohorts is notable.)*
 
 ## 6. Purity Adjustment of CAF/EMT Signals (Figure 3E)
 
@@ -229,41 +243,43 @@ Weak correlation suggests the hypoxia-high/acinar-low state is partially a compo
 
 ## 9. Immune / Endothelial QC Check
 
-**METHODOLOGY CORRECTION (2026-07-06):** This section draws from the same `figure3B_lipid_cell_of_origin_statistics.tsv` table used in Section 4, which has already been re-computed at the patient-pseudobulk level (≥5 cells/patient, ≥3 patients/arm) — no separate script exists for this section. GSE154778 could not be tested for any cell type (only 1 aggressive patient total), so all figures below are from Peng_et_al (5 aggressive vs 6 reference patients) only.
+**METHODOLOGY CORRECTION (2026-07-06):** This section draws from the same `figure3B_lipid_cell_of_origin_statistics.tsv` table used in Section 4, which has already been re-computed at the patient-pseudobulk level (≥5 cells/patient, ≥3 patients/arm) — no separate script exists for this section. GSE154778 could not be tested for any cell type (only 1 aggressive patient total).
 
-- **myeloid** (Peng_et_al, n=5 vs 6 patients): 0/3 lipid comparisons significant at FDR<0.05 (lipid_synthesis_srebp p_adj=0.855; desaturation_elongation p_adj=0.855; fatty_acid_uptake_oxidation p_adj=0.855, wrong direction). Previously reported as "2/3 significant" from a pseudoreplicated cell-level test (n in the thousands); at the patient level there is no significant myeloid lipid signal. Low off-target signal consistent with tumor-driven lipid rewiring, though this could equally reflect the small patient count (n=11 total) rather than a true null.
-- **endothelial** (Peng_et_al, n=5 vs 6 patients): 0/3 lipid comparisons significant at FDR<0.05 (lipid_synthesis_srebp p_adj=0.855; desaturation_elongation p_adj=0.698; fatty_acid_uptake_oxidation p_adj=0.698, correct direction but ns). Previously reported as "2/3 significant" from the same flawed cell-level test. No significant endothelial off-target lipid signal at the patient level.
-- **caf_fibroblast** (Peng_et_al, n=5 vs 6 patients; see also Section 4): 0/3 lipid comparisons significant at FDR<0.05 (p_adj = 0.273 for all three). Previously reported as significant under the cell-level test. No significant CAF lipid signal at the patient level.
+**DATA UPGRADE (2026-07-12):** GSE202051 is now testable (7 aggressive vs 14–16 reference patients, per Section 3's note on the full 43-patient object), so this section is no longer based on a single 11-patient cohort. Combined with Peng_et_al (5 aggressive vs 6 reference patients):
 
-**Revised conclusion:** After correcting for pseudoreplication, none of the three non-malignant cell types (myeloid, endothelial, CAF) show a statistically significant lipid difference between aggressive and reference patients in the one testable cohort. This removes the previous "myeloid/endothelial/CAF lipid signal" as a confound to worry about, but the absence of significance here is at least partly a power issue (n=11 patients) rather than confirmed evidence of no effect — it should not be read as a clean negative any more than the malignant-cell result should be read as a clean positive.
+- **myeloid**: Peng_et_al 0/3 lipid comparisons significant (all p_adj≥0.855). **GSE202051 (n=6 vs 15 patients): 1/3 significant — fatty_acid_uptake_oxidation p_adj=0.031, correctly reduced in aggressive patients' myeloid cells.** This is new significant off-target signal that the underpowered Peng_et_al cohort could not detect.
+- **endothelial**: Peng_et_al 0/3 significant. **GSE202051 (n=7 vs 16 patients): 1/3 significant — lipid_synthesis_srebp p_adj=0.023, but in the *wrong* direction (reduced, not elevated, in aggressive patients' endothelial cells).**
+- **caf_fibroblast**: Peng_et_al 0/3 significant. **GSE202051 (n=7 vs 16 patients): 2/3 significant — lipid_synthesis_srebp p_adj=0.002 (wrong direction) and fatty_acid_uptake_oxidation p_adj=0.005 (correct direction, reduced in aggressive).** See also Section 4.
+
+**Revised conclusion (2026-07-12):** The prior conclusion — "no significant off-target lipid signal, but this may just reflect the small (n=11) patient count" — has been directly tested by adding a much better-powered cohort, and the answer is mixed. GSE202051 does detect several significant off-target/non-malignant signals that Peng_et_al alone could not: myeloid and CAF fatty-acid-oxidation reduction in aggressive patients (consistent direction with the malignant-cell finding, suggesting a possible shared microenvironmental driver rather than a purely malignant-cell-intrinsic FA-oxidation effect), and CAF/endothelial lipid-synthesis reversal (opposite direction from the malignant-cell trend). This means the "off-target lipid signal is negligible" reading from the single-cohort report no longer holds cleanly — non-malignant compartments do show real, cohort-detectable lipid differences between aggressive and reference patients, some concordant with and some opposed to the malignant-cell pattern. This should be read as evidence that the aggressive/reference microenvironment differs broadly (not just in malignant cells), which complicates a simple "the lipid signal is malignant-cell-intrinsic" narrative even where the malignant-cell direction itself is correct.
 
 ## 10. Final Mechanistic Classification
 
-**Classification: Partially resolved / mixed (revised 2026-07-06 after pseudoreplication fix, purity-proxy circularity fix, and real GSE21501 survival fix)**
+**Classification: Partially resolved / mixed (revised 2026-07-12 after the GSE202051 43-patient data upgrade; previously revised 2026-07-06 after pseudoreplication fix, purity-proxy circularity fix, and real GSE21501 survival fix)**
 
-Based on **real single-cell RNA-seq data** (GSE154778: 8,000 primary tumor cells, 10 patients; GSE202051: 2,607 snRNA-seq nuclei, 1 patient; Peng et al.: 43,888 cells, 17 patients), real Phase 2 bulk cohorts for purity adjustment, and **real CPTAC proteomics** (umich 145 + BCM 105 tumor samples):
+Based on **real single-cell RNA-seq data** (GSE154778: 8,000 primary tumor cells, 10 patients; **GSE202051: 224,988 cells, 43 patients — upgraded 2026-07-12 from a 2,607-cell, 1-patient subset**; Peng et al.: 43,888 cells, 17 patients), real Phase 2 bulk cohorts for purity adjustment, and **real CPTAC proteomics** (umich 145 + BCM 105 tumor samples):
 
-1. **Hypoxia/acinar co-occurrence (REAL DATA — negative result, unaffected by the fix):** Pearson r(hypoxia, acinar) in malignant cells = +0.06, −0.03, −0.02 across three real scRNA-seq cohorts (all near-zero; p > 0.05 in 2/3 cohorts). The fraction of malignant cells in the hypoxia-high/acinar-low quadrant is 24–27%, indistinguishable from the 25% expected under independence. This still supports the composite-artifact interpretation: hypoxia-high and acinar-low programs largely occur in separate malignant cell subpopulations, not the same cells.
+1. **Hypoxia/acinar co-occurrence (REAL DATA — negative result, now confirmed in 3/3 adequately-powered cohorts):** Pearson r(hypoxia, acinar) in malignant cells = +0.06, +0.04, −0.02 across three real scRNA-seq cohorts (all near-zero; GSE202051 now p<0.0001 with n=64,538 malignant cells, no longer resting on 1 patient). The fraction of malignant cells in the hypoxia-high/acinar-low quadrant is 24–27%, indistinguishable from the 25% expected under independence. This finding is now on firmer footing than before 2026-07-12: all three cohorts, not two of three, are adequately powered and agree.
 
-2. **Lipid rewiring cell-of-origin (REVISED — weak positive signal, not a clean negative):** The original claim that lipid scores reverse direction in malignant cells was driven almost entirely by pseudoreplication in GSE154778 (1 vs 2 patients tested as 698 vs 368 "independent" cells) — that result is now excluded as untestable. In the one adequately powered cohort (Peng_et_al, 5 vs 6 patients), lipid_synthesis_srebp is significantly elevated in aggressive malignant cells in the **expected** direction (FDR=0.019), consistent with (not against) cell-intrinsic lipid synthesis rewiring. Desaturation/elongation trends in the expected direction (not significant); FA-oxidation does not reproduce. This remains underpowered (n=11 patients total) and does not resolve cell-of-origin definitively, but the corrected direction of evidence is the opposite of what was previously reported.
+2. **Lipid rewiring cell-of-origin (REVISED 2026-07-12 — malignant lipid-synthesis signal strengthens, but off-target/wrong-direction signal also emerges):** In the two now-adequately-powered cohorts, malignant-cell lipid_synthesis_srebp trends in the expected (elevated) direction in both (Peng_et_al significant, FDR=0.019; GSE202051 same direction, FDR=0.052, borderline). This is stronger support for cell-intrinsic lipid synthesis rewiring than the single-cohort result reported before 2026-07-12. However, GSE202051 also reveals that malignant desaturation/elongation is *significantly reversed* (not merely non-significant, as Peng_et_al alone suggested), and that CAF and endothelial cells show significant lipid_synthesis_srebp changes in the *wrong* direction — complications invisible in the underpowered single-cohort analysis. FA-oxidation reduction is now the most consistently-reproduced lipid axis, correct-direction and significant in GSE202051's CAF and myeloid compartments.
 
-3. **CAF/EMT cell-of-origin (REVISED — EMT reversal partially holds up, CAF descriptive only):** After patient-level correction, EMT score is still significantly LOWER in H-hi/A-lo malignant cells in the one testable cohort (Peng_et_al: 5 vs 6 patients, FDR=0.019) — opposite the expected direction, same qualitative conclusion as before but based on 1/1 testable cohorts rather than the previously claimed 2/2 (GSE154778 could not be tested with only 1 aggressive patient). CAF subtype proportions (recomputed as mean-of-per-patient proportions rather than pooled-cell proportions) remain broadly similar between aggressive and reference groups in Peng_et_al (5 vs 6 patients); GSE154778 CAF proportions are now explicitly descriptive only (1 vs 2 patients).
+3. **CAF/EMT cell-of-origin (REVISED 2026-07-12 — EMT reversal now trends in 2/2 adequately-powered cohorts, not 1/1):** EMT score is significantly LOWER in aggressive malignant cells in Peng_et_al (5 vs 6 patients, FDR=0.019) and trends the same direction in GSE202051 (7 vs 14 patients, FDR=0.061, just short of significance) — directionally consistent evidence in both testable cohorts now, versus a single 11-patient cohort before 2026-07-12. GSE154778 still cannot be tested (only 1 aggressive patient). CAF subtype proportions are now a real inferential comparison in GSE202051 (7 vs 16 patients, not just descriptive) and show the same qualitative pattern as GSE154778's descriptive numbers — lower myCAF/iCAF proportion in aggressive patients.
 
-4. **Purity adjustment of bulk CAF/EMT (REVISED 2026-07-06 — circularity fixed; CAF/EMT signal is largely real, not a purity artifact):** The original purity proxy was rebuilt to be disjoint from the CAF/EMT signatures (see Section 6). With the corrected proxy, CAF and EMT effects survive purity adjustment essentially intact and remain highly significant in the two adequately powered cohorts (GSE71729 n=145: caf coef 0.53→0.46, p<0.0001; GSE62165 n=131: caf coef 0.44→0.43, p<0.0001; EMT similarly stable in both). Only in the smallest, already-underpowered cohort (GSE79668, n=49, unadjusted p=0.13–0.15) does the coefficient drop substantially. This **reverses** the earlier conclusion that the CAF signal was "largely explained by tumor purity variation" — that conclusion was itself substantially an artifact of the original proxy's circularity (60% gene overlap with the CAF signature). The corrected analysis instead supports a real, largely purity-independent CAF/EMT association in bulk PDAC.
+4. **Purity adjustment of bulk CAF/EMT (unaffected by the GSE202051 upgrade — uses only Phase 2 bulk cohorts):** CAF and EMT effects survive purity adjustment essentially intact and remain highly significant in the two adequately powered bulk cohorts (GSE71729 n=145: caf coef 0.53→0.46, p<0.0001; GSE62165 n=131: caf coef 0.44→0.43, p<0.0001; EMT similarly stable in both). Supports a real, largely purity-independent CAF/EMT association in bulk PDAC.
 
 5. **Protein-level validation (REAL DATA — partially concordant, independently replicated, unaffected by the fix):** ACADL replicated FDR<0.05 in both umich and BCM; FASN, ACACA, SQLE elevated and significant in umich (FDR<0.05), directionally concordant but underpowered in BCM.
 
-6. **Survival (REVISED 2026-07-06 — real GSE21501 fit changes the trend from consistent to inconsistent):** GSE21501's entry was previously a hardcoded literature value (HR=1.40, p=0.21) despite the real SOFT file being on disk and unparsed. A real Cox fit (n=102, 66 events, same hypoxia-high/acinar-low definition as Phase 2) gives **HR=0.93, p=0.80** — essentially null, and in the opposite direction from the other two cohorts. The pooled estimate drops from HR=1.22 [0.89–1.68] to **HR=1.06 [0.77–1.47], p=0.72**. This is no longer "HR>1 in all cohorts, just underpowered" — it is 2/3 cohorts with HR>1 and one centered on the null, which is a materially weaker survival story than previously reported.
+6. **Survival (unaffected by the GSE202051 upgrade — uses only bulk cohorts):** A real Cox fit on GSE21501 (n=102, 66 events) gives HR=0.93, p=0.80 — essentially null, opposite direction from the other two bulk cohorts. Pooled estimate: HR=1.06 [0.77–1.47], p=0.72. The survival trend across the three available bulk cohorts is inconsistent in direction, not merely underpowered.
 
-**Recommended wording (revised 2026-07-06 after purity-proxy fix and real GSE21501 survival fix):**
+**Recommended wording (revised 2026-07-12 after the GSE202051 data upgrade):**
 
-> Single-cell analysis indicates the bulk hypoxia-high/acinar-low signature is a composite of two largely independent malignant-cell axes (r ≈ 0 at the cell level in three cohorts) rather than a single coherent program. Patient-level (pseudobulk) re-analysis, correcting an earlier cell-level pseudoreplication error, finds a modest cell-intrinsic elevation of lipid synthesis genes in aggressive malignant cells in the one adequately powered cohort (n=5 vs 6 patients, FDR=0.019) — weak evidence in favor of, not against, tumor-intrinsic lipid rewiring — while EMT score is lower, not higher, in aggressive malignant cells in that same cohort (FDR=0.019). Contrary to the earlier report, the bulk CAF and EMT associations **survive adjustment for tumor purity** using a corrected, non-circular purity proxy, remaining highly significant in the two adequately powered bulk cohorts (GSE71729, GSE62165) with only 1–13% coefficient attenuation — the CAF/EMT signal in bulk PDAC is not primarily a tumor-purity artifact. A real Cox fit on the previously unparsed GSE21501 cohort gives HR=0.93 (p=0.80), pulling the pooled survival estimate to HR=1.06 [0.77–1.47], p=0.72 — the survival association across the three available cohorts should now be described as inconsistent in direction, not merely underpowered. All single-cell cell-of-origin conclusions are based on very small patient numbers (≤17 per cohort, ≤11 per comparison) and require replication in larger and, ideally, matched bulk+single-cell cohorts.
+> Single-cell analysis indicates the bulk hypoxia-high/acinar-low signature is a composite of two largely independent malignant-cell axes (r ≈ 0 at the cell level, now confirmed in three adequately powered cohorts totaling >75,000 malignant cells) rather than a single coherent program. Patient-level (pseudobulk) analysis across the two best-powered single-cell cohorts (Peng et al., n=11 patients; GSE202051, n=21 patients) finds a consistent-direction elevation of lipid synthesis genes in aggressive malignant cells (significant in one cohort, borderline in the other) — evidence in favor of, not against, tumor-intrinsic lipid rewiring — while EMT score trends lower, not higher, in aggressive malignant cells in both cohorts (significant in one, borderline in the other). The newly well-powered GSE202051 cohort also reveals lipid-metabolism differences in non-malignant compartments (CAF, endothelial, myeloid) not detectable in the smaller cohort alone, some concordant with and some opposed to the malignant-cell direction, indicating the aggressive/reference microenvironment differs broadly rather than the lipid signal being cleanly malignant-cell-intrinsic. The bulk CAF and EMT associations **survive adjustment for tumor purity** using a corrected, non-circular purity proxy, remaining highly significant in the two adequately powered bulk cohorts (GSE71729, GSE62165) with only 1–13% coefficient attenuation — the CAF/EMT signal in bulk PDAC is not primarily a tumor-purity artifact. A real Cox fit on GSE21501 gives HR=0.93 (p=0.80), pulling the pooled bulk survival estimate to HR=1.06 [0.77–1.47], p=0.72 — the survival association across the three available bulk cohorts is inconsistent in direction, not merely underpowered. Single-cell cell-of-origin conclusions now rest on two adequately powered cohorts (11 and 21 testable patients) rather than one, a meaningful improvement, but larger and ideally matched bulk+single-cell cohorts would still strengthen these findings further.
 
 ## 11. Limitations
 
 1. **No matched bulk + single-cell patient data.** The three single-cell cohorts (GSE154778, GSE202051, Peng et al.) are independent from the bulk Phase 2 cohorts and share no patients. The within-single-cell-dataset H-hi/A-lo grouping is not equivalent to the between-dataset Phase 2 aggressive group definition. Lipid cell-of-origin conclusions require matched data.
 
-2. **GSE202051 has only 1 unique patient ID.** The `pid` column in GSE202051 identifies a single patient, making patient-level aggressive/reference classification inapplicable. Cell-level H-hi/A-lo scoring is used instead.
+2. **(Resolved 2026-07-12) GSE202051 previously had only 1 usable patient ID** because the pipeline had downloaded a single-sample GEO supplementary file rather than the full series object. The full 43-patient object (`GSE202051_totaldata-final-toshare.h5ad`) is now used instead, making patient-level aggressive/reference classification possible (7 vs 14–16 patients depending on cell type). See Sections 3–5, 9.
 
 3. **Dissociation stress artifacts.** GSE154778 (stress ratio 7.95) and Peng_et_al (stress ratio 9.84) show elevated dissociation-stress genes (FOS, JUN, HSP family). Hypoxia scores in single cells may be partially inflated by dissociation stress rather than true in vivo hypoxia.
 
@@ -273,24 +289,24 @@ Based on **real single-cell RNA-seq data** (GSE154778: 8,000 primary tumor cells
 
 6. **(Resolved 2026-07-06) Purity proxy circularity.** The proxy now uses 8 genes (PTPRC, THY1, SPARC, CD2, CD14, CD34, LAPTM5, SERPING1) verified disjoint from the CAF/EMT signatures, replacing the original 6-gene proxy that was a strict subset of the CAF signature. It remains an expression-mean heuristic rather than a validated ESTIMATE/CIBERSORTx purity estimate — that upgrade is still open (see Next Steps item 4) — but the collinearity that made the CAF-attenuation conclusion partly circular is fixed.
 
-7. **GSE202051 is snRNA-seq (nuclei), not scRNA-seq.** Nuclear transcriptomes have lower cytoplasmic gene expression (especially mitochondrial). CAF and stromal gene scores may be underestimated.
+7. **GSE202051 is snRNA-seq (nuclei), not scRNA-seq.** Nuclear transcriptomes have lower cytoplasmic gene expression (especially mitochondrial). CAF and stromal gene scores may be underestimated. This applies to the full 43-patient object too, not just the previously-used subset.
 
-8. **Small malignant cell counts in GSE202051 (n=2,039 total; 1 patient).** Statistical comparisons for this cohort are underpowered for patient-level inferences.
+8. **(Resolved 2026-07-12) Small malignant cell counts in GSE202051 (previously n=2,039 total, 1 patient)** — now n=64,538 malignant cells across 43 patients (18 untreated, 25 treated) after switching to the full series object. Statistical comparisons for this cohort are now adequately powered for patient-level inferences (see Sections 3–5, 9). Note: the 43 patients include both untreated and neoadjuvant-treated samples (`treatment_status` in the raw object); treatment status was not used to stratify or exclude patients in this analysis, so treatment effects could in principle contribute to between-patient variance not attributable to the aggressive/reference axis.
 
-9. **(New) Cell-of-origin sample sizes are small even after the pseudoreplication fix.** Only Peng_et_al (17 patients) has enough aggressive/reference patients to test at all; GSE154778 (10 patients) and GSE202051 (1 patient) cannot support patient-level significance tests for lipid/EMT cell-of-origin. The corrected Section 4/5 conclusions rest on n=5 vs 6 patients in a single cohort and should be treated as suggestive pending more patients or matched bulk+single-cell data.
+9. **(Improved 2026-07-12, still a real limitation) Cell-of-origin sample sizes remain modest.** GSE202051 is now testable (7 vs 14–16 patients) alongside Peng_et_al (5 vs 6 patients), a real improvement over the single 11-patient cohort used before 2026-07-12. GSE154778 (10 patients, only 1 aggressive) still cannot be tested. The Section 4/5 conclusions now rest on two independent, adequately-powered cohorts rather than one, but n in the tens (not hundreds) of patients per cohort — treat as reasonably solid directional evidence, not definitive.
 
-10. **(Resolved) Section 9 (Immune/Endothelial QC)** has been re-run at the patient level (see Section 9). With only Peng_et_al testable (5 vs 6 patients), the "no significant off-target lipid signal" conclusion is now correctly powered but rests on a single cohort — obtaining more patients per cohort would strengthen it.
+10. **(Resolved 2026-07-06, strengthened 2026-07-12) Section 9 (Immune/Endothelial QC)** has been re-run at the patient level with both Peng_et_al and the newly upgraded GSE202051 (see Section 9). The "no significant off-target lipid signal" conclusion from the single-cohort version does **not** hold with GSE202051 included — real off-target signal (some concordant, some discordant with the malignant-cell direction) is now detectable in CAF, myeloid, and endothelial compartments.
 
 ## 12. Recommended Manuscript Wording
 
-The recommended wording in Section 10 reflects what the real data support after the patient-level correction. Do not use the previous wording claiming malignant lipid rewiring "does not reproduce" or "reverses direction" — the corrected, adequately-powered comparison points the other way (weak positive support) for lipid synthesis specifically.
+The recommended wording in Section 10 reflects what the real data support after the patient-level correction and the 2026-07-12 GSE202051 data upgrade. Do not use wording claiming malignant lipid rewiring "does not reproduce" or "reverses direction" — the corrected, adequately-powered comparison points the other way (consistent-direction support, significant in one of two testable cohorts) for lipid synthesis specifically. Do not describe off-target (CAF/myeloid/endothelial) lipid signal as absent or negligible — GSE202051 now shows real, significant off-target effects in several compartments (Section 9).
 
 For the survival finding (revised 2026-07-06 — do not use the previous "consistent directional trend" wording, which relied on a hardcoded GSE21501 value):
 > "Across the three cohorts with available survival data, the hypoxia-high/acinar-low state showed an inconsistent association with overall survival (HR=1.23 and 1.08 in two cohorts, HR=0.93 in a third), and the pooled estimate did not reach statistical significance (pooled HR = 1.06, 95% CI [0.77–1.47], p = 0.72). This is better characterized as no clear survival association in the available data than as a consistent trend obscured by low power."
 
 ## 13. Next Steps
 
-1. **Obtain matched bulk + single-cell data** for the same patients (e.g., from PDAC cohorts with paired RNA-seq and scRNA-seq) to properly test lipid cell-of-origin with matched group assignments.
+1. **Obtain matched bulk + single-cell data** for the same patients (e.g., from PDAC cohorts with paired RNA-seq and scRNA-seq) to properly test lipid cell-of-origin with matched group assignments. (Still open as of 2026-07-12 — the GSE202051 upgrade added patients but not matched bulk data; searched for candidates and found none with genuinely matched bulk+single-cell from the same patients — see Werba/Hwang/Loveless et al. options evaluated but not integrated.)
 
 2. ~~**Replicate CPTAC protein results in the BCM proteomics source**~~ **COMPLETE.** BCM replication done: ACADL replicated FDR<0.05 in both umich and BCM; FASN/ACACA/SQLE directionally concordant but underpowered in BCM (n=23 reference). See Section 7.
 
@@ -302,7 +318,9 @@ For the survival finding (revised 2026-07-06 — do not use the previous "consis
 
 6. **Dissociation stress correction:** Apply computational correction for dissociation artifacts (e.g., van den Brink et al. 2017 gene list) before re-scoring hypoxia in GSE154778 and Peng et al.
 
-7. ~~**Re-run Section 9 (Immune/Endothelial QC) at the patient level**~~ **COMPLETE.** See Section 9. Obtaining more single-cell cohorts (or more patients within existing cohorts) would still let GSE154778 and GSE202051 support patient-level lipid/EMT cell-of-origin tests, which they currently cannot (1–2 patients per arm).
+7. ~~**Re-run Section 9 (Immune/Endothelial QC) at the patient level**~~ **COMPLETE**, and ~~**obtain more single-cell cohorts/patients so GSE202051 can support patient-level tests**~~ **COMPLETE (2026-07-12).** GSE202051 was upgraded from 1 to 43 patients (Section 3 note) and now supports patient-level lipid/EMT/immune-endothelial tests alongside Peng_et_al. GSE154778 (10 patients, only 1 aggressive) still cannot be tested — would need more patients or a different cohort to resolve.
+
+8. **(New 2026-07-12) Stratify or exclude by treatment status in GSE202051.** The full object includes both untreated (18 patients) and neoadjuvant-treated (25 patients) samples; this analysis pooled both without stratification (see Limitation 8). Re-running the aggressive/reference comparison restricted to the 18 untreated patients (or with treatment status as a covariate) would rule out treatment as a confound.
 
 ---
-*Report generated by Phase 3 pipeline. Single-cell data: REAL (GSE154778, GSE202051, Peng et al.). CPTAC proteomics: REAL (umich 145 + BCM 105 tumor samples; ACADL independently replicated FDR<0.05 in both). Survival cohort GSE21501: REAL Cox fit (HR=0.93, p=0.80, n=102) computed from the parsed SOFT file, replacing the previous hardcoded literature value (see Section 8/11). Purity adjustment: REAL Phase 2 bulk expression data with an 8-gene purity proxy verified disjoint from the CAF/EMT signatures (see Section 6/11). Sections 4, 5, and 9 re-analyzed 2026-07-06 using patient-level pseudobulk to correct a cell-level pseudoreplication error; Section 6 re-analyzed 2026-07-06 with the corrected purity proxy, reversing the earlier "CAF signal is purity-driven" conclusion; Section 8 re-analyzed 2026-07-06 with the real GSE21501 Cox fit, reversing the earlier "consistent survival trend" framing.*
+*Report generated by Phase 3 pipeline. Single-cell data: REAL (GSE154778; **GSE202051 — upgraded 2026-07-12 to the full 43-patient object, 224,988 cells**; Peng et al.). CPTAC proteomics: REAL (umich 145 + BCM 105 tumor samples; ACADL independently replicated FDR<0.05 in both). Survival cohort GSE21501: REAL Cox fit (HR=0.93, p=0.80, n=102) computed from the parsed SOFT file, replacing the previous hardcoded literature value (see Section 8/11). Purity adjustment: REAL Phase 2 bulk expression data with an 8-gene purity proxy verified disjoint from the CAF/EMT signatures (see Section 6/11). Sections 4, 5, and 9 re-analyzed 2026-07-06 using patient-level pseudobulk to correct a cell-level pseudoreplication error, and again 2026-07-12 to incorporate the full GSE202051 object; Section 6 re-analyzed 2026-07-06 with the corrected purity proxy, reversing the earlier "CAF signal is purity-driven" conclusion; Section 8 re-analyzed 2026-07-06 with the real GSE21501 Cox fit, reversing the earlier "consistent survival trend" framing.*

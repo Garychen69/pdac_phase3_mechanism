@@ -55,9 +55,12 @@ def has_real_data_gse154778(raw_dir):
 
 
 def has_real_data_gse202051(raw_dir):
-    """Check if GSE202051 h5ad is present."""
-    h5ad = os.path.join(raw_dir, "GSE202051_adata_010nuc_10x.h5ad")
-    return os.path.exists(h5ad)
+    """Check if GSE202051 h5ad is present. Prefers the full 43-patient
+    combined object; the old adata_010nuc_10x.h5ad is a single-sample
+    subset (1 usable patient) kept only as a legacy fallback."""
+    full = os.path.join(raw_dir, "GSE202051_full.h5ad")
+    subset = os.path.join(raw_dir, "GSE202051_adata_010nuc_10x.h5ad")
+    return os.path.exists(full) or os.path.exists(subset)
 
 
 def has_real_data_peng(raw_dir):
@@ -115,8 +118,13 @@ def load_gse154778(raw_dir):
 
 
 def load_gse202051(raw_dir):
-    """Load GSE202051 h5ad (already QC'd and annotated)."""
-    h5ad_path = os.path.join(raw_dir, "GSE202051_adata_010nuc_10x.h5ad")
+    """Load GSE202051 h5ad (already QC'd and annotated). Prefers the full
+    43-patient combined object (totaldata-final-toshare) over the legacy
+    single-sample subset (adata_010nuc_10x), which only yielded 1 usable
+    patient and made this cohort untestable at the patient level."""
+    full_path = os.path.join(raw_dir, "GSE202051_full.h5ad")
+    subset_path = os.path.join(raw_dir, "GSE202051_adata_010nuc_10x.h5ad")
+    h5ad_path = full_path if os.path.exists(full_path) else subset_path
     print(f"  Loading {h5ad_path} ...")
     adata = sc.read_h5ad(h5ad_path)
     print(f"  Raw AnnData: {adata.n_obs} cells × {adata.n_vars} genes")
@@ -124,6 +132,7 @@ def load_gse202051(raw_dir):
     # Set required metadata
     if "pid" in adata.obs.columns:
         adata.obs["patient_id"] = adata.obs["pid"].astype(str)
+        print(f"  Patient count: {adata.obs['patient_id'].nunique()}")
     else:
         adata.obs["patient_id"] = "GSE202051_P01"
 
@@ -428,17 +437,14 @@ def check_dissociation_stress(adata, cohort_name):
     if not found:
         print(f"  Dissociation stress genes: none found in dataset")
         return False
-    # Compute mean expression of stress genes
+    # Compute mean expression of stress genes. scipy sparse matrices support
+    # .mean() natively without densifying first -- densifying the full matrix
+    # (previously done via .toarray() below) needs n_cells x n_genes x 4 bytes,
+    # which is fine for small cohorts but allocates double-digit GB and crashes
+    # on a 225k-cell x 22k-gene cohort like the full GSE202051 object.
     gene_idx = [list(adata.var_names).index(g) for g in found]
-    if hasattr(adata.X, "toarray"):
-        stress_expr = adata.X[:, gene_idx].toarray().mean()
-    else:
-        stress_expr = adata.X[:, gene_idx].mean()
-    # Compare to overall mean
-    if hasattr(adata.X, "toarray"):
-        overall_mean = adata.X.toarray().mean()
-    else:
-        overall_mean = adata.X.mean()
+    stress_expr = adata.X[:, gene_idx].mean()
+    overall_mean = adata.X.mean()
     ratio = stress_expr / (overall_mean + 1e-9)
     if ratio > 1.5:
         print(f"  WARNING: Dissociation stress genes elevated (ratio={ratio:.2f}). "

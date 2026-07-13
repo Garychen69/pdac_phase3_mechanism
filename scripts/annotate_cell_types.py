@@ -43,7 +43,8 @@ CANONICAL_MARKERS = {
     "bcell_plasma": ["MS4A1", "CD79A", "MZB1"],
 }
 
-# Mapping from GSE202051 score columns to standard vocabulary
+# Mapping from GSE202051 score columns to standard vocabulary (legacy path,
+# used only if the richer 'new_celltypes' column below is unavailable)
 GSE202051_TYPE_MAP = {
     "MALIGNANT CELLS": "malignant_epithelial",
     "ACINAR": "acinar_normal",
@@ -53,6 +54,38 @@ GSE202051_TYPE_MAP = {
     "ENDOTHELIAL": "endothelial",
     "IMMUNE": "myeloid",
 }
+
+
+def map_gse202051_new_celltype(label):
+    """Map the full GSE202051 object's fine-grained 'new_celltypes' labels
+    (e.g. 'Epithelial-Malignant', 'Fibroblast-myCAF', 'Immune-CD8pos_Tcells')
+    to this pipeline's standard cell-type vocabulary (CELL_TYPES_ORDERED
+    below). Cell types with no clean standard-vocabulary equivalent
+    (pericytes, vascular smooth muscle, endocrine, Schwann, adipocyte)
+    map to 'unknown', consistent with how unmapped types are handled
+    elsewhere in this pipeline."""
+    if not isinstance(label, str):
+        return "unknown"
+    if label.startswith("Epithelial-Malignant"):
+        return "malignant_epithelial"
+    if label.startswith(("Epithelial-Ductal", "Epithelial-Atypical_Ductal", "Epithelial-ADM")):
+        return "ductal_normal"
+    if label.startswith("Epithelial-Acinar"):
+        return "acinar_normal"
+    if label.startswith(("Fibroblast-CAF", "Fibroblast-myCAF", "Fibroblast-iCAF")):
+        return "caf_fibroblast"
+    if label.startswith("Fibroblast-"):
+        return "unknown"  # Pericyte, vSMC — not in standard vocabulary
+    if label.startswith("Endothelial-"):
+        return "endothelial"
+    if label == "Immune-Macrophage" or label.startswith(("Immune-cDC", "Immune-pDC", "Immune-DC_activated",
+                                                           "Immune-Mast", "Immune-Neutrophil")):
+        return "myeloid"
+    if label in ("Immune-B", "Immune-Plasma"):
+        return "bcell_plasma"
+    if label.startswith("Immune-"):
+        return "tcell_nk"  # CD4/CD8/NK/Treg/dysfunctional-T subsets
+    return "unknown"  # Endocrine-*, Schwann, Adipocyte, etc.
 
 CELL_TYPES_ORDERED = [
     "malignant_epithelial", "caf_fibroblast", "endothelial",
@@ -132,26 +165,36 @@ def annotate_with_simulation_labels(adata):
 # ---------------------------------------------------------------------------
 
 def annotate_gse202051(adata, name):
-    """Assign cell types using existing score columns; reuse existing UMAP/Leiden."""
-    print(f"  GSE202051: using existing UMAP, Leiden, and cell-type scores.")
-
-    # Build priority list (use only columns that exist)
+    """Assign cell types using existing annotations; reuse existing UMAP/Leiden."""
     type_candidates = {}
-    for col, std_type in GSE202051_TYPE_MAP.items():
-        if col in adata.obs.columns:
-            if std_type not in type_candidates:
-                type_candidates[std_type] = col
-            # Prefer 'MALIGNANT CELLS' over 'CAF' for malignant, etc.
-
-    # For each cell: pick standard type with highest obs score
-    score_df = pd.DataFrame(index=adata.obs.index)
-    for std_type, col in type_candidates.items():
-        score_df[std_type] = adata.obs[col].values.astype(float)
-
-    if score_df.shape[1] > 0:
-        adata.obs["cell_type"] = score_df.idxmax(axis=1).values
+    if "new_celltypes" in adata.obs.columns:
+        # Full 43-patient object: use the real fine-grained annotation column
+        # directly rather than the old argmax-over-score-columns heuristic.
+        n_fine = adata.obs["new_celltypes"].nunique()
+        print(f"  GSE202051: mapping {n_fine} real 'new_celltypes' labels to standard vocabulary.")
+        adata.obs["cell_type"] = adata.obs["new_celltypes"].map(map_gse202051_new_celltype)
+        unmapped = int((adata.obs["cell_type"] == "unknown").sum())
+        print(f"    {unmapped}/{adata.n_obs} cells map to 'unknown' (pericyte/endocrine/Schwann/etc.)")
     else:
-        adata.obs["cell_type"] = "unknown"
+        print(f"  GSE202051: using existing UMAP, Leiden, and cell-type scores.")
+
+        # Build priority list (use only columns that exist)
+        type_candidates = {}
+        for col, std_type in GSE202051_TYPE_MAP.items():
+            if col in adata.obs.columns:
+                if std_type not in type_candidates:
+                    type_candidates[std_type] = col
+                # Prefer 'MALIGNANT CELLS' over 'CAF' for malignant, etc.
+
+        # For each cell: pick standard type with highest obs score
+        score_df = pd.DataFrame(index=adata.obs.index)
+        for std_type, col in type_candidates.items():
+            score_df[std_type] = adata.obs[col].values.astype(float)
+
+        if score_df.shape[1] > 0:
+            adata.obs["cell_type"] = score_df.idxmax(axis=1).values
+        else:
+            adata.obs["cell_type"] = "unknown"
 
     # Ensure leiden column exists
     if "leiden" not in adata.obs.columns:

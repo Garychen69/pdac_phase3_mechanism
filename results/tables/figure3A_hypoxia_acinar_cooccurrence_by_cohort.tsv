@@ -1,4 +1,4 @@
 cohort	n_malignant_cells	n_patients	pearson_r_hypoxia_acinar	pearson_p	spearman_r_hypoxia_acinar	spearman_p	frac_hypoxia_high_acinar_low	frac_hypoxia_low_acinar_high	frac_hypoxia_high_acinar_high	frac_hypoxia_low_acinar_low	cooccurrence_interpretation	is_simulated
 GSE154778	3710	10	0.0596	0.0003	0.0751	0.0	0.2445	0.2445	0.2555	0.2555	Largely separate populations (composite artifact)	False
-GSE202051	2039	1	-0.0305	0.168	-0.0083	0.7089	0.2609	0.2609	0.2393	0.2388	Largely separate populations (composite artifact)	False
+GSE202051	64538	43	0.0359	0.0	0.0637	0.0	0.2604	0.2604	0.2396	0.2396	Largely separate populations (composite artifact)	False
 Peng_et_al	11370	17	-0.016	0.088	-0.0185	0.0484	0.2718	0.2718	0.2282	0.2282	Largely separate populations (composite artifact)	False

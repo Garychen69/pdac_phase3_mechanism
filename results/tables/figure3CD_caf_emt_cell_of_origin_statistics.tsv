@@ -1,5 +1,8 @@
 section	cohort	cell_type	score	n_aggressive	n_reference	n_aggressive_cells	n_reference_cells	median_diff_agg_minus_ref	wilcoxon_p_raw	observed_direction	expected_direction	direction_reproduced	is_simulated	unit_of_analysis	wilcoxon_p_adj_BH	significant_FDR05	analysis	patient_group	caf_subtype	n_caf_cells	n_patients	fraction
-EMT_malignant	Peng_et_al	malignant_epithelial	emt_score	5.0	6.0	5730.0	3666.0	-0.1349	0.0062	down	up	False	False	patient_pseudobulk	0.018600000000000002	True						
+EMT_malignant	GSE202051	malignant_epithelial	emt_score	7.0	14.0	20172.0	15414.0	-0.0794	0.0305	down	up	False	False	patient_pseudobulk	0.061	False						
+EMT_malignant	GSE202051	caf_fibroblast	emt_score	7.0	16.0	8183.0	23348.0	0.2366	0.0194	up	up	True	False	patient_pseudobulk	0.0582	False						
+EMT_malignant	GSE202051	myeloid	emt_score	6.0	15.0	2229.0	4888.0	0.0158	0.3502	up	up	True	False	patient_pseudobulk	0.42024	False						
+EMT_malignant	Peng_et_al	malignant_epithelial	emt_score	5.0	6.0	5730.0	3666.0	-0.1349	0.0062	down	up	False	False	patient_pseudobulk	0.037200000000000004	True						
 EMT_malignant	Peng_et_al	caf_fibroblast	emt_score	5.0	6.0	288.0	938.0	0.0557	0.8551	up	up	True	False	patient_pseudobulk	0.8551	False						
 EMT_malignant	Peng_et_al	myeloid	emt_score	5.0	6.0	2107.0	5675.0	0.0562	0.2733	up	up	True	False	patient_pseudobulk	0.40995	False						
 CAF_subtype	GSE154778												False	mean_of_per_patient_proportions			caf_subtype_proportion	aggressive	myCAF	168.0	1.0	0.0655
@@ -8,6 +11,12 @@ CAF_subtype	GSE154778												False	mean_of_per_patient_proportions			caf_sub
 CAF_subtype	GSE154778												False	mean_of_per_patient_proportions			caf_subtype_proportion	reference	myCAF	677.0	2.0	0.1353
 CAF_subtype	GSE154778												False	mean_of_per_patient_proportions			caf_subtype_proportion	reference	iCAF	677.0	2.0	0.0584
 CAF_subtype	GSE154778												False	mean_of_per_patient_proportions			caf_subtype_proportion	reference	apCAF	677.0	2.0	0.0063
+CAF_subtype	GSE202051												False	mean_of_per_patient_proportions			caf_subtype_proportion	aggressive	myCAF	8183.0	7.0	0.0615
+CAF_subtype	GSE202051												False	mean_of_per_patient_proportions			caf_subtype_proportion	aggressive	iCAF	8183.0	7.0	0.0966
+CAF_subtype	GSE202051												False	mean_of_per_patient_proportions			caf_subtype_proportion	aggressive	apCAF	8183.0	7.0	0.0048
+CAF_subtype	GSE202051												False	mean_of_per_patient_proportions			caf_subtype_proportion	reference	myCAF	23348.0	16.0	0.1394
+CAF_subtype	GSE202051												False	mean_of_per_patient_proportions			caf_subtype_proportion	reference	iCAF	23348.0	16.0	0.2114
+CAF_subtype	GSE202051												False	mean_of_per_patient_proportions			caf_subtype_proportion	reference	apCAF	23348.0	16.0	0.0212
 CAF_subtype	Peng_et_al												False	mean_of_per_patient_proportions			caf_subtype_proportion	aggressive	myCAF	288.0	5.0	0.1868
 CAF_subtype	Peng_et_al												False	mean_of_per_patient_proportions			caf_subtype_proportion	aggressive	iCAF	288.0	5.0	0.0954
 CAF_subtype	Peng_et_al												False	mean_of_per_patient_proportions			caf_subtype_proportion	aggressive	apCAF	288.0	5.0	0.0119

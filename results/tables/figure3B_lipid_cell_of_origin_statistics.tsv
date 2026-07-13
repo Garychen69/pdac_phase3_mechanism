@@ -1,4 +1,16 @@
 cohort	cell_type	score	n_aggressive	n_reference	n_aggressive_cells	n_reference_cells	expected_direction	observed_direction	median_diff_agg_minus_ref	wilcoxon_p_raw	wilcoxon_p_adj_BH	significant_FDR05	direction_reproduced	fully_reproduced	is_simulated	unit_of_analysis	cell_intrinsic_supported
+GSE202051	malignant_epithelial	lipid_synthesis_srebp	7	14	20172	15414	up	up	0.0692	0.0524	0.0524	False	True	False	False	patient_pseudobulk	False
+GSE202051	malignant_epithelial	desaturation_elongation	7	14	20172	15414	up	down	-0.015	0.0072	0.0217	True	False	False	False	patient_pseudobulk	False
+GSE202051	malignant_epithelial	fatty_acid_uptake_oxidation	7	14	20172	15414	down	down	-0.0144	0.044	0.0524	False	True	False	False	patient_pseudobulk	False
+GSE202051	caf_fibroblast	lipid_synthesis_srebp	7	16	8183	23348	up	down	-0.0684	0.0007	0.002	True	False	False	False	patient_pseudobulk	False
+GSE202051	caf_fibroblast	desaturation_elongation	7	16	8183	23348	up	down	-0.0186	0.0325	0.0325	True	False	False	False	patient_pseudobulk	False
+GSE202051	caf_fibroblast	fatty_acid_uptake_oxidation	7	16	8183	23348	down	down	-0.0192	0.0033	0.0049	True	True	True	False	patient_pseudobulk	False
+GSE202051	myeloid	lipid_synthesis_srebp	6	15	2229	4888	up	down	-0.0401	0.0734	0.11	False	False	False	False	patient_pseudobulk	False
+GSE202051	myeloid	desaturation_elongation	6	15	2229	4888	up	up	0.0045	0.4363	0.4363	False	True	False	False	patient_pseudobulk	False
+GSE202051	myeloid	fatty_acid_uptake_oxidation	6	15	2229	4888	down	down	-0.0086	0.0102	0.0306	True	True	True	False	patient_pseudobulk	False
+GSE202051	endothelial	lipid_synthesis_srebp	7	16	2967	7652	up	down	-0.0604	0.0075	0.0226	True	False	False	False	patient_pseudobulk	False
+GSE202051	endothelial	desaturation_elongation	7	16	2967	7652	up	down	-0.0193	0.0383	0.0575	False	False	False	False	patient_pseudobulk	False
+GSE202051	endothelial	fatty_acid_uptake_oxidation	7	16	2967	7652	down	down	-0.0122	0.1244	0.1244	False	True	False	False	patient_pseudobulk	False
 Peng_et_al	malignant_epithelial	lipid_synthesis_srebp	5	6	5730	3666	up	up	0.089	0.0062	0.0185	True	True	True	False	patient_pseudobulk	True
 Peng_et_al	malignant_epithelial	desaturation_elongation	5	6	5730	3666	up	up	0.0447	0.5839	0.5839	False	True	False	False	patient_pseudobulk	False
 Peng_et_al	malignant_epithelial	fatty_acid_uptake_oxidation	5	6	5730	3666	down	up	0.0194	0.2733	0.41	False	False	False	False	patient_pseudobulk	False

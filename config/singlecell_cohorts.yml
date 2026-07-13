@@ -20,6 +20,14 @@ cohorts:
     description: "PDAC scRNA-seq cohort 2"
     geo_accession: GSE202051
     raw_dir: data/raw/singlecell/GSE202051
+    # NOTE: if reprocessing this cohort from raw data again, do the actual
+    # preprocess/annotate/score work with processed_file pointed at a local
+    # (non-OneDrive-synced) scratch path, not this one. The full 43-patient
+    # raw object is ~7.8GB; reading/writing it repeatedly from inside the
+    # OneDrive-synced project folder was catastrophically slow (near-zero
+    # CPU utilization over many minutes, likely OneDrive's cloud sync filter
+    # driver contending with scanpy's many small internal HDF5 reads). Copy
+    # the finished file back here afterward, as done for this run.
     processed_file: data/processed/singlecell/GSE202051_preprocessed.h5ad
     annotations_file: data/processed/singlecell/GSE202051_cell_annotations.tsv
     scores_file: data/processed/singlecell/GSE202051_cell_scores.tsv
