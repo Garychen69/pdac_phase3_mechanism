@@ -104,6 +104,36 @@ def load_phase2_data(cohort):
         return scores_df, None, False
 
 
+def load_real_estimate_purity(cohort_name):
+    """Load real ESTIMATE (Yoshihara et al. 2013) stromal/immune scores computed
+    by scripts/estimate_purity.R via the tidyestimate package, and convert to a
+    purity-direction covariate. Returns None if not yet computed for this cohort.
+
+    We use the raw combined 'estimate' score (stromal + immune enrichment),
+    not the Affymetrix-only purity-conversion formula, as the adjustment
+    covariate for all three cohorts: the conversion formula
+    (purity = cos(0.6049872018 + 0.0001467884*estimate)) is only valid for
+    Affymetrix arrays (only GSE62165 qualifies; GSE79668 is RNA-seq, GSE71729
+    is Agilent), and even restricted to GSE62165 it returns NA for 112/131
+    samples (high-stroma/immune samples push the cosine argument past the
+    point where it goes negative) — too much sample loss to use as the
+    primary covariate. The raw 'estimate' score requires no such conversion
+    and is itself a standard, widely-used continuous stromal/immune-content
+    covariate in the literature."""
+    path = os.path.join(PURITY_DIR, f"{cohort_name}_estimate_scores.tsv")
+    if not os.path.exists(path):
+        print(f"  Real ESTIMATE scores not found at {path}; run scripts/estimate_purity.R first")
+        return None
+    df = pd.read_csv(path, sep="\t", index_col=0)
+    estimate_score = df["estimate"]
+    s_min, s_max = estimate_score.min(), estimate_score.max()
+    if s_max > s_min:
+        purity = 1.0 - (estimate_score - s_min) / (s_max - s_min)
+    else:
+        purity = pd.Series(0.5, index=estimate_score.index)
+    return purity
+
+
 def estimate_purity(scores_df, expr_df, cohort_name):
     """Estimate tumor purity via a stromal/immune gene expression proxy that is
     disjoint from the CAF and EMT signatures being purity-adjusted (see
@@ -144,7 +174,7 @@ def estimate_purity(scores_df, expr_df, cohort_name):
     return purity.fillna(0.5).clip(0, 1)
 
 
-def run_linear_models(scores_df, purity, cohort_name, is_simulated):
+def run_linear_models(scores_df, purity, cohort_name, is_simulated, purity_method):
     """Run adjusted and unadjusted linear models for CAF and EMT scores.
     Uses the 'aggressive' binary column directly from the Phase 2 scores file."""
     results = []
@@ -204,6 +234,7 @@ def run_linear_models(scores_df, purity, cohort_name, is_simulated):
 
         results.append({
             "cohort": cohort_name,
+            "purity_method": purity_method,
             "score": score_col,
             "n_samples": len(scores_aligned),
             "n_aggressive": int(group_binary.sum()),
@@ -237,15 +268,26 @@ def main():
         print(f"--- Cohort: {name} ---")
         try:
             scores_df, expr_df, is_simulated = load_phase2_data(cohort)
-            purity = estimate_purity(scores_df, expr_df, name)
-            print(f"  Purity range: {purity.min():.3f} - {purity.max():.3f}")
-            # Save purity estimates
-            purity_df = pd.DataFrame({"sample_id": purity.index, "estimated_purity": purity.values,
-                                      "cohort": name, "is_simulated": is_simulated})
-            purity_path = os.path.join(PURITY_DIR, f"{name}_purity_estimates.tsv")
-            purity_df.to_csv(purity_path, sep="\t", index=False)
-            # Run models
-            results = run_linear_models(scores_df, purity, name, is_simulated)
+
+            # Method 1 (primary): real ESTIMATE (Yoshihara et al. 2013) via tidyestimate
+            real_purity = load_real_estimate_purity(name)
+            if real_purity is not None:
+                print(f"  [real ESTIMATE] purity-direction range: {real_purity.min():.3f} - {real_purity.max():.3f}")
+                purity_df = pd.DataFrame({"sample_id": real_purity.index, "estimated_purity": real_purity.values,
+                                          "cohort": name, "method": "real_ESTIMATE_ssGSEA", "is_simulated": is_simulated})
+                purity_df.to_csv(os.path.join(PURITY_DIR, f"{name}_real_estimate_purity.tsv"), sep="\t", index=False)
+                results = run_linear_models(scores_df, real_purity, name, is_simulated, "real_ESTIMATE_ssGSEA")
+                all_results.extend(results)
+            else:
+                print(f"  WARNING: no real ESTIMATE scores for {name}; run scripts/estimate_purity.R first")
+
+            # Method 2 (legacy, kept for comparison): disjoint 8-gene heuristic proxy
+            heuristic_purity = estimate_purity(scores_df, expr_df, name)
+            print(f"  [heuristic proxy] purity range: {heuristic_purity.min():.3f} - {heuristic_purity.max():.3f}")
+            heuristic_df = pd.DataFrame({"sample_id": heuristic_purity.index, "estimated_purity": heuristic_purity.values,
+                                      "cohort": name, "method": "heuristic_8gene_proxy", "is_simulated": is_simulated})
+            heuristic_df.to_csv(os.path.join(PURITY_DIR, f"{name}_purity_estimates.tsv"), sep="\t", index=False)
+            results = run_linear_models(scores_df, heuristic_purity, name, is_simulated, "heuristic_8gene_proxy")
             all_results.extend(results)
         except Exception as e:
             import traceback
@@ -253,27 +295,34 @@ def main():
             traceback.print_exc()
         print()
 
-    # BH correction across all p-values
+    # BH correction across all p-values, computed separately per purity method
+    # (each method is its own family of tests; pooling both together would
+    # understate significance for whichever method has fewer/weaker results)
     if all_results:
         df = pd.DataFrame(all_results)
-        pvals_unadj = df["pval_unadjusted"].fillna(1.0).values
-        pvals_adj_model = df["pval_purity_adjusted"].fillna(1.0).values
-        _, unadj_bh, _, _ = multipletests(pvals_unadj, method="fdr_bh")
-        _, adj_bh, _, _ = multipletests(pvals_adj_model, method="fdr_bh")
-        df["pval_unadjusted_BH"] = unadj_bh.round(4)
-        df["pval_purity_adjusted_BH"] = adj_bh.round(4)
+        df["pval_unadjusted_BH"] = np.nan
+        df["pval_purity_adjusted_BH"] = np.nan
+        for method, idx in df.groupby("purity_method").groups.items():
+            pvals_unadj = df.loc[idx, "pval_unadjusted"].fillna(1.0).values
+            pvals_adj_model = df.loc[idx, "pval_purity_adjusted"].fillna(1.0).values
+            _, unadj_bh, _, _ = multipletests(pvals_unadj, method="fdr_bh")
+            _, adj_bh, _, _ = multipletests(pvals_adj_model, method="fdr_bh")
+            df.loc[idx, "pval_unadjusted_BH"] = unadj_bh.round(4)
+            df.loc[idx, "pval_purity_adjusted_BH"] = adj_bh.round(4)
 
         out_path = os.path.join(TABLES_DIR, "figure3E_purity_adjusted_caf_emt_results_by_cohort.tsv")
         df.to_csv(out_path, sep="\t", index=False)
         print(f"Results saved: {out_path}")
-        print(df[["cohort", "score", "coef_unadjusted", "coef_purity_adjusted",
+        print(df[["cohort", "purity_method", "score", "coef_unadjusted", "coef_purity_adjusted",
                    "direction_change_after_adjustment"]].to_string(index=False))
 
-        # Figure
+        # Figure (primary method: real ESTIMATE only, to keep the plot readable;
+        # the full comparison including the legacy heuristic proxy is in the TSV)
         fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+        plot_df = df[df["purity_method"] == "real_ESTIMATE_ssGSEA"]
         for ax_idx, score_col in enumerate(["caf_score", "emt_score"]):
             ax = axes[ax_idx]
-            sub = df[df["score"] == score_col]
+            sub = plot_df[plot_df["score"] == score_col]
             x = np.arange(len(sub))
             w = 0.35
             ax.bar(x - w/2, sub["coef_unadjusted"].fillna(0), width=w, label="Unadjusted", color="#3498db", alpha=0.8)
@@ -286,7 +335,7 @@ def main():
             ax.legend()
             ax.grid(axis="y", alpha=0.3)
         suptitle = "[SIMULATED] " if df["is_simulated"].all() else ""
-        plt.suptitle(f"{suptitle}Purity-Adjusted CAF/EMT Effects (Figure 3E)", fontsize=12)
+        plt.suptitle(f"{suptitle}Purity-Adjusted CAF/EMT Effects, real ESTIMATE method (Figure 3E)", fontsize=12)
         plt.tight_layout()
         plt.savefig(os.path.join(FIGURES_DIR, "Figure3E_purity_adjusted_CAF_EMT.pdf"), bbox_inches="tight")
         plt.close()
