@@ -1,0 +1,30 @@
+analysis	subset	n_malignant_cells	n_patients	pearson_r	p_value	frac_hypoxia_high_acinar_low	cell_type	score	n_aggressive	n_reference	expected_direction	observed_direction	median_diff_agg_minus_ref	p_raw	p_adj_BH	significant_FDR05	direction_reproduced	patient_group	caf_subtype	n_caf_cells	mean_fraction
+hypoxia_acinar_correlation	full	64538.0	43.0	0.0359	6.529020143116275e-20	0.2604															
+lipid_cell_of_origin	full						malignant_epithelial	lipid_synthesis_srebp	7.0	14.0	up	up	0.0692	0.0524	0.0524	False	True				
+lipid_cell_of_origin	full						malignant_epithelial	desaturation_elongation	7.0	14.0	up	down	-0.015	0.0072	0.0217	True	False				
+lipid_cell_of_origin	full						malignant_epithelial	fatty_acid_uptake_oxidation	7.0	14.0	down	down	-0.0144	0.044	0.0524	False	True				
+lipid_cell_of_origin	full						caf_fibroblast	lipid_synthesis_srebp	7.0	16.0	up	down	-0.0684	0.0007	0.002	True	False				
+lipid_cell_of_origin	full						caf_fibroblast	desaturation_elongation	7.0	16.0	up	down	-0.0186	0.0325	0.0325	True	False				
+lipid_cell_of_origin	full						caf_fibroblast	fatty_acid_uptake_oxidation	7.0	16.0	down	down	-0.0192	0.0033	0.0049	True	True				
+lipid_cell_of_origin	full						myeloid	lipid_synthesis_srebp	6.0	15.0	up	down	-0.0401	0.0734	0.11	False	False				
+lipid_cell_of_origin	full						myeloid	desaturation_elongation	6.0	15.0	up	up	0.0045	0.4363	0.4363	False	True				
+lipid_cell_of_origin	full						myeloid	fatty_acid_uptake_oxidation	6.0	15.0	down	down	-0.0086	0.0102	0.0306	True	True				
+lipid_cell_of_origin	full						endothelial	lipid_synthesis_srebp	7.0	16.0	up	down	-0.0604	0.0075	0.0226	True	False				
+lipid_cell_of_origin	full						endothelial	desaturation_elongation	7.0	16.0	up	down	-0.0193	0.0383	0.0575	False	False				
+lipid_cell_of_origin	full						endothelial	fatty_acid_uptake_oxidation	7.0	16.0	down	down	-0.0122	0.1244	0.1244	False	True				
+emt_cell_of_origin	full						malignant_epithelial		7.0	14.0		down	-0.0794	0.0305							
+emt_cell_of_origin	full						caf_fibroblast		7.0	16.0		up	0.2366	0.0194							
+emt_cell_of_origin	full						myeloid		6.0	15.0		up	0.0158	0.3502							
+caf_subtype_proportion	full		7.0															aggressive	myCAF	8183.0	0.3775
+caf_subtype_proportion	full		7.0															aggressive	iCAF	8183.0	0.5932
+caf_subtype_proportion	full		7.0															aggressive	apCAF	8183.0	0.0293
+caf_subtype_proportion	full		16.0															reference	myCAF	23348.0	0.3748
+caf_subtype_proportion	full		16.0															reference	iCAF	23348.0	0.5682
+caf_subtype_proportion	full		16.0															reference	apCAF	23348.0	0.057
+hypoxia_acinar_correlation	untreated_only	52999.0	18.0	0.0584	3.004908824729401e-41	0.2466															
+caf_subtype_proportion	untreated_only		3.0															aggressive	myCAF	3599.0	0.3059
+caf_subtype_proportion	untreated_only		3.0															aggressive	iCAF	3599.0	0.6672
+caf_subtype_proportion	untreated_only		3.0															aggressive	apCAF	3599.0	0.027
+caf_subtype_proportion	untreated_only		2.0															reference	myCAF	1910.0	0.2692
+caf_subtype_proportion	untreated_only		2.0															reference	iCAF	1910.0	0.6063
+caf_subtype_proportion	untreated_only		2.0															reference	apCAF	1910.0	0.1245
