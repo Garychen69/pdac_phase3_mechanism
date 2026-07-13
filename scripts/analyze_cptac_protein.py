@@ -16,6 +16,7 @@ np.random.seed(1234)
 random.seed(1234)
 
 from scipy import stats
+import statsmodels.api as sm
 from statsmodels.stats.multitest import multipletests
 import matplotlib
 matplotlib.use("Agg")
@@ -52,7 +53,7 @@ ACINAR_GENES = ["PTF1A", "BHLHA15", "RBPJL", "CPA1", "CPA2", "PRSS1", "PRSS2", "
 
 
 def load_cptac_dataset():
-    """Load the shared CPTAC PDAC object plus transcriptomics/purity once."""
+    """Load the shared CPTAC PDAC object plus transcriptomics/purity/clinical once."""
     import cptac
     print("  Loading CPTAC PDAC dataset...")
     pdac = cptac.Pdac()
@@ -63,7 +64,10 @@ def load_cptac_dataset():
     trans = trans_raw[~trans_raw.index.str.endswith(".N")].copy()
     print(f"  Transcriptomics: {trans.shape[0]} tumor samples x {trans.shape[1]} genes")
 
-    # ESTIMATE tumor purity
+    # ESTIMATE tumor purity — this is CPTAC's own published ESTIMATE-derived
+    # purity (StromalScore/ImmuneScore/ESTIMATEScore/TumorPurity), computed by
+    # the consortium on the same washu RNA-seq data, not a proxy built by
+    # this pipeline. Used below as a confounder in the protein comparisons.
     print("  Fetching tumor purity (ESTIMATE)...")
     try:
         purity_raw = pdac.get_tumor_purity(source="washu")
@@ -73,7 +77,22 @@ def load_cptac_dataset():
         print(f"  Purity load failed: {e}")
         purity_df = None
 
-    return pdac, trans, purity_df
+    # Clinical (grade, stage) for confounder adjustment
+    print("  Fetching clinical data (mssm)...")
+    try:
+        clin_raw = pdac.get_clinical(source="mssm")
+        clin = clin_raw[~clin_raw.index.str.endswith(".N")].copy()
+        clin["grade_numeric"] = clin["histologic_grade"].str.extract(r"G(\d)").astype(float)
+        stage_map = {"Stage I": 1, "Stage II": 2, "Stage III": 3, "Stage IV": 4}
+        clin["stage_numeric"] = clin["tumor_stage_pathological"].map(stage_map)
+        print(f"  Clinical: {clin.shape[0]} samples "
+              f"({clin['grade_numeric'].notna().sum()} with grade, "
+              f"{clin['stage_numeric'].notna().sum()} with stage)")
+    except Exception as e:
+        print(f"  Clinical load failed: {e}")
+        clin = None
+
+    return pdac, trans, purity_df, clin
 
 
 def load_proteomics(pdac, source):
@@ -184,6 +203,77 @@ def run_protein_comparison(prot, group_df):
     df = pd.DataFrame(results)
     _, fdr, _, _ = multipletests(df["p_value"].values, method="fdr_bh")
     df["fdr"] = fdr.round(4)
+    return df
+
+
+def run_confounder_adjusted_comparison(prot, group_df, purity_df, clin):
+    """Re-test the aggressive-vs-reference protein effect adjusting for tumor
+    purity (CPTAC's own washu ESTIMATE TumorPurity), histologic grade, and
+    pathologic stage, to rule out the ACADL/lipid protein findings being
+    driven by these known PDAC confounders rather than the hypoxia/acinar
+    axis itself. Uses OLS (protein ~ aggressive + purity + grade + stage) and
+    reports the aggressive-group coefficient before/after adjustment,
+    analogous to the bulk CAF/EMT purity-adjustment analysis in
+    deconvolve_bulk_purity.py."""
+    common = prot.index.intersection(group_df.index)
+    if purity_df is not None:
+        common = common.intersection(purity_df.index)
+    if clin is not None:
+        common = common.intersection(clin.index)
+    print(f"  Samples with proteomics + group + purity + clinical: {len(common)}")
+
+    prot_a = prot.loc[common]
+    grp_a = group_df.loc[common]
+    is_agg_or_ref = grp_a["group"].isin(["aggressive", "reference"])
+    prot_a = prot_a.loc[is_agg_or_ref]
+    grp_a = grp_a.loc[is_agg_or_ref]
+    group_binary = (grp_a["group"] == "aggressive").astype(float).values
+
+    covars = pd.DataFrame(index=grp_a.index)
+    if purity_df is not None:
+        covars["purity"] = purity_df.loc[grp_a.index, "TumorPurity"]
+    if clin is not None:
+        covars["grade"] = clin.loc[grp_a.index, "grade_numeric"]
+        covars["stage"] = clin.loc[grp_a.index, "stage_numeric"]
+    covars = covars.apply(lambda c: c.fillna(c.median()))
+
+    results = []
+    for gene_set, info in LIPID_PROTEINS.items():
+        for gene in info["genes"]:
+            if gene not in prot_a.columns:
+                continue
+            y_full = prot_a[gene].astype(float)
+            valid = y_full.notna()
+            y = y_full[valid].values
+            x_group = group_binary[valid.values]
+            x_covars = covars.loc[valid].values
+            if valid.sum() < 10:
+                continue
+
+            X_unadj = sm.add_constant(x_group)
+            m_unadj = sm.OLS(y, X_unadj).fit()
+
+            X_adj = sm.add_constant(np.column_stack([x_group, x_covars]))
+            m_adj = sm.OLS(y, X_adj).fit()
+
+            results.append({
+                "gene_set": gene_set,
+                "protein": gene,
+                "n": int(valid.sum()),
+                "coef_unadjusted": round(float(m_unadj.params[1]), 4),
+                "pval_unadjusted": round(float(m_unadj.pvalues[1]), 6),
+                "coef_purity_grade_stage_adjusted": round(float(m_adj.params[1]), 4),
+                "pval_purity_grade_stage_adjusted": round(float(m_adj.pvalues[1]), 6),
+                "covariates_used": ", ".join(covars.columns),
+            })
+
+    if not results:
+        return pd.DataFrame()
+    df = pd.DataFrame(results)
+    _, fdr_u, _, _ = multipletests(df["pval_unadjusted"].values, method="fdr_bh")
+    _, fdr_a, _, _ = multipletests(df["pval_purity_grade_stage_adjusted"].values, method="fdr_bh")
+    df["fdr_unadjusted"] = fdr_u.round(4)
+    df["fdr_purity_grade_stage_adjusted"] = fdr_a.round(4)
     return df
 
 
@@ -356,7 +446,7 @@ def main():
     print("=== CPTAC-PDA Protein Validation — umich + BCM Replication ===\n")
 
     # Load shared resources once
-    pdac, trans, purity_df = load_cptac_dataset()
+    pdac, trans, purity_df, clin = load_cptac_dataset()
 
     # Compute group assignments from transcriptomics (shared)
     print("\nAssigning groups from transcriptomics...")
@@ -397,6 +487,21 @@ def main():
         # Per-source figure (simple)
         make_figure(prot, group_df, results_df)
 
+        # Confounder-adjusted comparison (purity + grade + stage)
+        print(f"\nRunning purity/grade/stage-adjusted comparisons ({source})...")
+        adj_df = run_confounder_adjusted_comparison(prot, group_df, purity_df, clin)
+        if not adj_df.empty:
+            adj_df["source"] = source
+            adj_out = os.path.join(TABLES_DIR, f"cptac_{source}_lipid_protein_confounder_adjusted.tsv")
+            adj_df.to_csv(adj_out, sep="\t", index=False)
+            print(f"  Confounder-adjusted results saved: {adj_out}")
+            print(adj_df[["protein", "coef_unadjusted", "fdr_unadjusted",
+                           "coef_purity_grade_stage_adjusted", "fdr_purity_grade_stage_adjusted"]]
+                  .to_string(index=False))
+            all_results[f"{source}_adjusted"] = adj_df
+        else:
+            print(f"  No confounder-adjusted results for {source} (missing purity/clinical data?)")
+
     # Combined figure + replication table
     if "umich" in all_results and "bcm" in all_results:
         print("\nBuilding cross-source replication table...")
@@ -423,6 +528,37 @@ def main():
             rep = "REPLICATED" if row["replicated_both"] else ""
             print(f"    {row['protein']:8s}  umich: {str(row.get('umich_direction','?')):4s} {u_sig:10s}  "
                   f"bcm: {str(row.get('bcm_direction','?')):4s} {b_sig:10s}  {rep}")
+
+    # Cross-source confounder-adjusted concordance (focused on whether the
+    # ACADL/lipid panel findings survive purity+grade+stage adjustment in
+    # BOTH proteomic sources, not just one)
+    if "umich_adjusted" in all_results and "bcm_adjusted" in all_results:
+        print("\nBuilding cross-source confounder-adjusted concordance table...")
+        u_adj = all_results["umich_adjusted"].set_index("protein")
+        b_adj = all_results["bcm_adjusted"].set_index("protein")
+        common_proteins = sorted(set(u_adj.index) & set(b_adj.index))
+        rows = []
+        for p in common_proteins:
+            ur, br = u_adj.loc[p], b_adj.loc[p]
+            rows.append({
+                "protein": p,
+                "umich_coef_adjusted": ur["coef_purity_grade_stage_adjusted"],
+                "umich_fdr_adjusted": ur["fdr_purity_grade_stage_adjusted"],
+                "bcm_coef_adjusted": br["coef_purity_grade_stage_adjusted"],
+                "bcm_fdr_adjusted": br["fdr_purity_grade_stage_adjusted"],
+                "concordant_direction_adjusted": np.sign(ur["coef_purity_grade_stage_adjusted"]) == np.sign(br["coef_purity_grade_stage_adjusted"]),
+                "significant_both_adjusted": (ur["fdr_purity_grade_stage_adjusted"] < 0.05) and (br["fdr_purity_grade_stage_adjusted"] < 0.05),
+            })
+        adj_concordance = pd.DataFrame(rows)
+        adj_out = os.path.join(TABLES_DIR, "figure3F_cptac_lipid_protein_confounder_adjusted_concordance.tsv")
+        adj_concordance.to_csv(adj_out, sep="\t", index=False)
+        print(f"Confounder-adjusted concordance table saved: {adj_out}")
+        print(adj_concordance.to_string(index=False))
+        if "ACADL" in adj_concordance["protein"].values:
+            acadl_row = adj_concordance[adj_concordance["protein"] == "ACADL"].iloc[0]
+            print(f"\n  ACADL after purity+grade+stage adjustment: umich FDR={acadl_row['umich_fdr_adjusted']}, "
+                  f"bcm FDR={acadl_row['bcm_fdr_adjusted']}, "
+                  f"still significant in both: {acadl_row['significant_both_adjusted']}")
 
     # Save ESTIMATE purity
     if purity_df is not None:
