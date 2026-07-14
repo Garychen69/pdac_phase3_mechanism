@@ -151,14 +151,28 @@ def analyze_caf_subtypes(cohort, gene_sets, all_results):
                 n_state_cells = len(state_obs)
                 if n_state_cells == 0:
                     continue
-                patient_cell_counts = state_obs.groupby("patient_id").size()
+                # observed=True is required here: patient_id on this AnnData-derived
+                # obs is a pandas Categorical with ALL cohort patients as categories
+                # (e.g. 43 for GSE202051), not just the ones in this state/arm. Without
+                # observed=True, groupby silently creates a zero-filled phantom group
+                # for every other patient in the full cohort, and .mean(axis=0) below
+                # then averages over all of them, diluting every reported fraction by
+                # exactly (n_valid_patients / n_total_patients_in_cohort) — verified
+                # against the previously-published numbers for all 3 cohorts, e.g.
+                # GSE202051 aggressive fractions summed to 0.1629 = 7/43 exactly,
+                # instead of the correct 1.0. This did not affect n_patients (computed
+                # from a >=5-cells count, and phantom groups have count 0 < 5) or the
+                # relative ranking of myCAF/iCAF/apCAF within a group, but did make
+                # every absolute percentage — and any aggressive-vs-reference magnitude
+                # comparison — wrong.
+                patient_cell_counts = state_obs.groupby("patient_id", observed=True).size()
                 valid_patients = patient_cell_counts[patient_cell_counts >= MIN_CELLS_PER_PATIENT].index
                 n_patients = len(valid_patients)
                 if n_patients == 0:
                     continue
                 per_patient_props = (
                     state_obs[state_obs["patient_id"].isin(valid_patients)]
-                    .groupby("patient_id")["caf_subtype"]
+                    .groupby("patient_id", observed=True)["caf_subtype"]
                     .value_counts(normalize=True)
                     .unstack(fill_value=0.0)
                 )
