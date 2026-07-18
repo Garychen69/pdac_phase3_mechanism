@@ -173,3 +173,19 @@ caf_subtypes:
     - CD74
     - SLPI
     - SAA1
+
+# Added 2026-07-18 to test the FAO-required-for-stemness literature tension
+# (PMC11351511, Fatty acid oxidation is critical for the tumorigenic
+# potential and chemoresistance of pancreatic cancer stem cells, J Transl
+# Med 2024). Deliberately the SAME marker panel that paper uses to define
+# its CD133+/CD44+ cancer-stem-cell-enriched population (CD133=PROM1,
+# CD44, plus the four core pluripotency TFs NANOG/KLF4/OCT3-4=POU5F1/SOX2)
+# rather than a substitute panel, so a within-cohort correlation against
+# this score is a like-for-like test of that paper's claim, not a proxy.
+pdac_stemness:
+  - PROM1
+  - CD44
+  - NANOG
+  - KLF4
+  - POU5F1
+  - SOX2
