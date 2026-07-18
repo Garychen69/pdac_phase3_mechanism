@@ -1,0 +1,2 @@
+cohort	n_basal	n_classical	median_ACADL_basal	median_ACADL_classical	effect_size	direction	p_value
+GSE71729	42	103	0.641	0.855	-0.214	lower_in_basal	0.08432930163353503
