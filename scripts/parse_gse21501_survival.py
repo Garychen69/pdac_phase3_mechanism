@@ -31,7 +31,10 @@ OUT_FILE = os.path.join(BASE_DIR, "data", "processed", "GSE21501_clinical_expres
 def load_genes_of_interest():
     with open(os.path.join(CONFIG_DIR, "gene_sets.yml")) as f:
         gene_sets = yaml.safe_load(f)
-    genes = set(gene_sets["hypoxia"]) | set(gene_sets["acinar_identity"])
+    # ACADL added 2026-07-18 for the ACADL-specific survival analysis
+    # (analyze_acadl_survival.py) — the anchor gene needs its own expression
+    # value pulled from this cohort too, not just the hypoxia/acinar markers.
+    genes = set(gene_sets["hypoxia"]) | set(gene_sets["acinar_identity"]) | {"ACADL"}
     return {g.upper() for g in genes}
 
 
